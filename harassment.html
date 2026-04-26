@@ -144,7 +144,7 @@
 
     <div id="stage2" class="step-section">
         <div class="question-title">2단계. 구체적으로 어떤 부당함을 겪으셨나요?</div>
-        <p style="font-size: 13px; color:#718096; margin-bottom:15px;">(가장 심각한 유형 하나를 선택해주세요)</p>
+        <p style="font-size: 13px; color:#718096; margin-bottom:15px;">(가장 주된 괴롭힘 유형 하나를 선택해주세요)</p>
         
         <div id="category-selection">
             <button class="option-btn st2-opt" onclick="startDeepDive('verbal', this)">💬 지속적인 폭언, 욕설, 인신공격 및 명예훼손</button>
@@ -168,16 +168,23 @@
             <button class="option-btn freq-opt" onclick="setFrequency('continuous', this)">지속적/반복적 (매주 지속되거나 수개월째 이어짐)</button>
         </div>
 
+        <div id="multi-question" style="display:none; margin-top: 20px; padding-top: 15px; border-top: 1px dashed #CBD5E0;">
+            <div class="depth-indicator">복합 피해 확인</div>
+            <div class="sub-question">위에서 답하신 주된 괴롭힘 외에도, 다른 유형의 부당한 대우를 동시에 겪고 계신가요?</div>
+            <button class="option-btn multi-opt" onclick="setMulti(true, this)">네, 폭언, 따돌림, 부당지시 등 여러 유형이 복합적으로 일어납니다.</button>
+            <button class="option-btn multi-opt" onclick="setMulti(false, this)">아니오, 주로 한 가지 유형에 집중되어 있습니다.</button>
+        </div>
+
         <button id="btn-next2" class="btn-next" onclick="triggerLoading('사건의 맥락을 분석 중입니다...', 500, goToStage3)">다음 단계로 (피해 진단)</button>
     </div>
 
     <div id="stage3" class="step-section">
         <div class="question-title">3단계. 현재 겪고 계신 피해와 고통의 정도는 어떠신가요?</div>
         
-        <button class="option-btn st3-opt" onclick="setPain('severe_medical', this)"><strong>[심각/증거 확보]</strong> 불면증, 우울증 등으로 병원 치료나 심리 상담을 받고 있습니다.</button>
-        <button class="option-btn st3-opt" onclick="setPain('severe_quit', this)"><strong>[심각/퇴사 고려]</strong> 너무 고통스러워 진지하게 퇴사나 이직을 고민하고 있습니다.</button>
-        <button class="option-btn st3-opt" onclick="setPain('moderate', this)"><strong>[중간/근무환경 악화]</strong> 스트레스로 인한 신체적 이상(두통 등)이 있거나 업무에 집중하기 어렵습니다.</button>
-        <button class="option-btn st3-opt" onclick="setPain('mild', this)"><strong>[경미/단순 불쾌감]</strong> 기분은 나쁘지만, 아직 참을 만하며 일상생활에 큰 지장은 없습니다.</button>
+        <button class="option-btn st3-opt" onclick="setPain('severe_medical', this)">불면증, 우울증 등으로 병원 치료나 심리 상담을 받고 있습니다.</button>
+        <button class="option-btn st3-opt" onclick="setPain('severe_quit', this)">너무 고통스러워 진지하게 퇴사나 이직을 고민하고 있습니다.</button>
+        <button class="option-btn st3-opt" onclick="setPain('moderate', this)">스트레스로 인한 신체적 이상(두통 등)이 있거나 업무에 집중하기 어렵습니다.</button>
+        <button class="option-btn st3-opt" onclick="setPain('mild', this)">기분은 나쁘지만, 아직 참을 만하며 일상생활에 큰 지장은 없습니다.</button>
 
         <button id="btn-submit" class="btn-submit" onclick="triggerLoading('NomuKing 알고리즘으로 최종 결과를 분석 중입니다...', 1000, calculateResult)">최종 결과 확인하기</button>
 
@@ -200,7 +207,7 @@
 
     let state = { 
         target: '', isPeerPowerful: null, 
-        actionCategory: '', deepAnswers: [], frequency: '', pain: '' 
+        actionCategory: '', deepAnswers: [], frequency: '', isMulti: null, pain: '' 
     };
 
     let currentDeepIndex = 0;
@@ -324,6 +331,13 @@
         clearSelection(document.querySelectorAll('.freq-opt'));
         btn.classList.add('selected');
         state.frequency = freq;
+        document.getElementById('multi-question').style.display = 'block'; // 빈도 선택 후 복합 피해 질문 노출
+    }
+
+    function setMulti(isMulti, btn) {
+        clearSelection(document.querySelectorAll('.multi-opt'));
+        btn.classList.add('selected');
+        state.isMulti = isMulti;
         document.getElementById('btn-next2').style.display = 'block';
     }
 
@@ -365,6 +379,9 @@
             else score += 50; 
         }
 
+        // 복합 피해 가중치 추가
+        if (state.isMulti) score += 10;
+
         if (state.pain === 'severe_medical') score += 20;
         else if (state.pain === 'severe_quit') score += 16;
         else if (state.pain === 'moderate') score += 12;
@@ -372,19 +389,27 @@
 
         if(score > 100) score = 100;
 
+        // 결과 산출 문구 톤앤매너 수정
         if (score >= 80) {
-            desc = "<strong>법적 괴롭힘 성립 요건을 명확히 충족합니다.</strong><br><br>";
+            desc = "<strong>법적 직장 내 괴롭힘에 해당할 가능성이 매우 높습니다.</strong><br><br>";
             if (state.target === 'employer') {
                 desc += "<span style='color:#E53E3E;'>※ 가해자가 '대표이사/등기이사'인 경우, 노동청 사실 인정 시 사업주에게 최대 1,000만 원의 과태료가 즉시 부과됩니다.</span><br><br>";
             }
-            if (state.pain === 'severe_medical') {
-                desc += "현재 병원 진료 기록이 있으시므로, 이는 노동청 진정뿐만 아니라 산재 신청 시에도 결정적인 증거가 됩니다.<br><br>";
+            if (state.isMulti) {
+                desc += "특히 여러 유형의 부당한 대우가 복합적으로 발생하고 있어 사안이 더욱 엄중하게 다뤄질 수 있습니다.<br><br>";
             }
-            desc += "더 이상 혼자 감내하지 마십시오. 객관적 증거(녹취, 메신저, 진료기록 등)를 바탕으로 전문가와 함께 즉각적인 법적 대응을 준비하셔야 합니다.";
+            if (state.pain === 'severe_medical') {
+                desc += "현재 병원 진료 기록이 있으시므로, 이는 노동청 진정 및 산재 신청 시 결정적인 증거로 활용될 수 있습니다.<br><br>";
+            }
+            desc += "객관적 증거(녹취, 메신저 캡처, 진료기록 등)를 바탕으로 전문가와 함께 대응 전략을 논의하시길 권장합니다.";
         } else if (score >= 55) {
-            desc = "<strong>괴롭힘으로 인정될 여지가 상당히 높습니다.</strong><br><br>선택하신 정황과 심층 요건들을 고려할 때 부당한 행위임이 인정됩니다. 다만, 노동청 진정 시 '업무상 필요성 부재'와 '지속성'을 방어하는 사측에 맞서기 위한 구체적인 기록(일지 등) 수집이 필수적입니다.";
+            desc = "<strong>직장 내 괴롭힘에 해당할 가능성이 상당합니다.</strong><br><br>";
+            if (state.isMulti) {
+                desc += "다양한 유형의 괴롭힘이 얽혀 있는 만큼, 각 행위에 대한 구체적인 증빙 자료 수집이 중요합니다.<br><br>";
+            }
+            desc += "다만, 향후 대응 시 사측에서 '업무상 필요성'을 주장할 수 있으므로, 해당 행위가 정당한 업무 지시가 아님을 입증할 수 있는 기록(일지 등)을 꾸준히 남겨두십시오.";
         } else {
-            desc = "<strong>현 상태로는 법적 요건 충족이 다소 까다로울 수 있습니다.</strong><br><br>직장 내 갈등 소지는 있으나, 법적인 '우위성'이나 객관적인 '근무환경 악화' 입증에서 다툼의 여지가 존재합니다. 사내 고충처리 절차를 먼저 밟아보시거나, 스트레스 완화를 위한 전문가 상담을 권장합니다.";
+            desc = "<strong>직장 내 괴롭힘으로 인정받기에는 법적 다툼의 여지가 존재합니다.</strong><br><br>직장 내 갈등 요소는 확인되나, 법적인 '우위성'이나 객관적인 '근무환경 악화' 입증에서 다소 어려움이 예상됩니다. 사내 고충처리 절차를 먼저 밟아보시거나, 스트레스 완화를 위한 전문가 상담을 권장합니다.";
         }
 
         document.getElementById('btn-submit').style.display = 'none';
@@ -395,7 +420,7 @@
 
     // --- 리셋 로직 ---
     function resetTest() {
-        state = { target: '', isPeerPowerful: null, actionCategory: '', deepAnswers: [], frequency: '', pain: '' };
+        state = { target: '', isPeerPowerful: null, actionCategory: '', deepAnswers: [], frequency: '', isMulti: null, pain: '' };
         currentDeepIndex = 0;
 
         clearSelection(document.querySelectorAll('.option-btn'));
@@ -407,6 +432,7 @@
         document.getElementById('category-selection').style.display = 'block';
         document.getElementById('deep-dive-section').style.display = 'none';
         document.getElementById('frequency-section').style.display = 'none';
+        document.getElementById('multi-question').style.display = 'none';
         document.getElementById('btn-next2').style.display = 'none';
 
         document.getElementById('btn-submit').style.display = 'none';
