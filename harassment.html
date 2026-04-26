@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>직장 내 괴롭힘 정밀 진단 | 노동법률센터</title>
+    <style>
+        /* [모던 UI/UX 디자인] */
+        :root {
+            --primary: #1A365D; /* 신뢰감을 주는 네이비 */
+            --secondary: #3182CE;
+            --bg-color: #F7FAFC;
+            --text-main: #2D3748;
+            --border-radius: 12px;
+        }
+
+        /* 텍스트 드래그 방지 */
+        body {
+            font-family: 'Pretendard', -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .container {
+            background: white;
+            max-width: 600px;
+            width: 100%;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        h1 { color: var(--primary); text-align: center; font-size: 24px; margin-bottom: 5px; }
+        p.desc { text-align: center; color: #718096; font-size: 14px; margin-bottom: 30px; }
+
+        /* 단계별 섹션 (초기엔 1단계만 보임) */
+        .step-section { display: none; animation: fadeIn 0.5s; }
+        .step-section.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .question-title { font-weight: bold; font-size: 18px; margin-bottom: 15px; color: var(--primary); }
+        .sub-question { font-weight: 600; font-size: 15px; margin: 20px 0 10px 0; }
+
+        /* 선택 버튼 디자인 */
+        .option-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #EDF2F7;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            font-size: 15px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #4A5568;
+        }
+        .option-btn:hover { background: #E2E8F0; }
+        .option-btn.selected { background: #EBF8FF; border-color: var(--secondary); color: var(--secondary); font-weight: bold; }
+
+        /* 경고 팝업 */
+        .alert-box { background: #FFF5F5; border-left: 4px solid #E53E3E; padding: 15px; margin-top: 20px; color: #C53030; display: none; font-size: 14px; line-height: 1.5; }
+
+        .btn-next, .btn-submit {
+            width: 100%; background: var(--primary); color: white; border: none; padding: 15px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 20px; transition: 0.3s;
+        }
+        .btn-next:hover, .btn-submit:hover { background: #2A4365; }
+
+        /* 결과 화면 */
+        .result-box { text-align: center; padding: 20px; background: #F7FAFC; border-radius: 8px; margin-top: 20px; }
+        .result-score { font-size: 36px; color: #E53E3E; font-weight: bold; margin: 10px 0; }
+
+        /* 저작권 문구 */
+        .copyright { font-size: 11px; color: #A0AEC0; text-align: center; margin-top: 40px; border-top: 1px solid #E2E8F0; padding-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+    <h1>🚨 직장 내 괴롭힘 정밀 진단</h1>
+    <p class="desc">노무사의 판단 로직으로 나의 상황을 정확히 진단합니다.</p>
+
+    <div id="stage1" class="step-section active">
+        <div class="question-title">1단계. 당신을 가장 힘들게 하는 사람은 누구입니까?</div>
+        
+        <button class="option-btn" onclick="selectTarget('boss', this)">👨‍💼 직속 상사 또는 임원/대표</button>
+        <button class="option-btn" onclick="selectTarget('senior', this)">🧑‍💻 나보다 먼저 입사한 선배 직원</button>
+        <button class="option-btn" onclick="selectTarget('group', this)">👥 다수의 무리 (집단 따돌림)</button>
+        <button class="option-btn" onclick="selectTarget('peer', this)">🤝 동일한 직급의 동료 또는 후배</button>
+        <button class="option-btn" onclick="selectTarget('external', this)">🏢 외부인 (고객, 거래처, 원청 등)</button>
+
+        <div id="peer-question" style="display: none; margin-top: 20px; padding-top: 15px; border-top: 1px dashed #CBD5E0;">
+            <div class="sub-question">직급이 같거나 낮더라도, 그 사람이 사내에서 입지가 더 강한가요?</div>
+            <button class="option-btn peer-opt" onclick="setPeerPower(true, this)">네, 정규직이거나 나이/학벌 등 입지가 훨씬 강합니다.</button>
+            <button class="option-btn peer-opt" onclick="setPeerPower(false, this)">아니오, 저와 조건이 거의 비슷합니다.</button>
+        </div>
+
+        <div id="external-alert" class="alert-box">
+            <strong>⚠️ [산업안전보건법 적용 대상]</strong><br>
+            고객이나 거래처 등 외부인에 의한 갑질은 근로기준법이 아닌 '산업안전보건법'으로 사측에 강력한 보호 조치를 요구할 수 있습니다. 노무사 상담을 통해 회사에 정당한 보호를 요구하십시오.
+        </div>
+
+        <button id="btn-next1" class="btn-next" style="display:none;" onclick="goToStage2()">다음 단계로 (행위 진단)</button>
+    </div>
+
+    <div id="stage2" class="step-section">
+        <div class="question-title">2단계. 구체적으로 어떤 부당함을 겪으셨나요?</div>
+        <p style="font-size: 13px; color:#718096; margin-bottom:15px;">(가장 심각한 것 하나를 선택해주세요)</p>
+
+        <button class="option-btn st2-opt" onclick="selectAction('verbal', this)">💬 업무 피드백을 넘은 욕설, 폭언, 모욕, 뒷담화</button>
+        <button class="option-btn st2-opt" onclick="selectAction('private', this)">🙅‍♂️ 본래 업무와 무관한 사적 심부름, 회식 강요</button>
+        <button class="option-btn st2-opt" onclick="selectAction('isolate', this)">👻 의도적인 업무 배제, 정보 차단, 승진 차별</button>
+        <button class="option-btn st2-opt" onclick="selectAction('control', this)">🛑 업무 미부여, 휴가 제한, 과도한 CCTV 감시</button>
+        <button class="option-btn st2-opt" onclick="selectAction('physical', this)">👊 신체적 폭력이나 물건을 던지는 위협적 행동</button>
+
+        <div id="frequency-question" style="display: none; margin-top: 20px; padding-top: 15px; border-top: 1px dashed #CBD5E0;">
+            <div class="sub-question">선택하신 상황은 얼마나 자주, 혹은 오래 발생했나요?</div>
+            <button class="option-btn freq-opt" onclick="setFrequency('once', this)">단발성 (1회 발생 후 멈춤)</button>
+            <button class="option-btn freq-opt" onclick="setFrequency('sometimes', this)">간헐적 발생 (한 달에 1~2회 정도)</button>
+            <button class="option-btn freq-opt" onclick="setFrequency('continuous', this)">지속적/반복적 발생 (매주 지속되거나 수개월 이어짐)</button>
+        </div>
+
+        <button id="btn-next2" class="btn-next" style="display:none;" onclick="goToStage3()">마지막 단계로</button>
+    </div>
+
+    <div id="stage3" class="step-section">
+        <div class="question-title">3단계. 현재 겪고 계신 고통의 정도는 어떠신가요?</div>
+        
+        <button class="option-btn st3-opt" onclick="setPain('severe', this)">너무 고통스러워 진지하게 퇴사/이직을 고려하거나 우울감을 겪고 있습니다.</button>
+        <button class="option-btn st3-opt" onclick="setPain('mild', this)">스트레스는 받지만, 아직 견딜 만하거나 무시하려고 노력 중입니다.</button>
+
+        <button id="btn-submit" class="btn-submit" style="display:none;" onclick="calculateResult()">최종 진단 결과 보기</button>
+
+        <div id="final-result" class="result-box" style="display:none;">
+            <h3>법적 직장 내 괴롭힘 성립 확률</h3>
+            <div id="score" class="result-score">0%</div>
+            <p id="result-desc" style="font-size: 15px; color: #4A5568; line-height: 1.6; text-align: left;"></p>
+            <button class="btn-submit" style="background:#E53E3E; margin-top:15px;" onclick="alert('노무사 상담 신청 페이지로 이동합니다.')">전문 노무사 1:1 비밀 상담 신청</button>
+        </div>
+    </div>
+
+    <div class="copyright">
+        본 판독기의 진단 알고리즘 및 저작물은 관련 법령에 의해 보호받고 있습니다.<br>
+        <strong>Copyright © 2024 [노무사님 법인명]. 무단 도용 및 복제 시 민형사상 책임을 묻습니다.</strong>
+    </div>
+</div>
+
+<script>
+    // [보안 로직 1] 개발자 도구 및 복사 방지
+    document.addEventListener('contextmenu', event => event.preventDefault()); // 우클릭 금지
+    document.addEventListener('keydown', function(e) {
+        if(e.keyCode == 123) { e.preventDefault(); return false; } // F12 차단
+        if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) { e.preventDefault(); return false; } // Ctrl+Shift+I 차단
+        if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) { e.preventDefault(); return false; } // Ctrl+Shift+C 차단
+        if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) { e.preventDefault(); return false; } // Ctrl+Shift+J 차단
+        if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) { e.preventDefault(); return false; } // Ctrl+U (소스보기) 차단
+    });
+    console.log("%c경고! 본 시스템의 로직을 무단 도용할 경우 저작권법 위반으로 법적 조치를 취합니다.", "color: red; font-size: 20px; font-weight: bold;");
+
+    // [진단 로직 상태 저장]
+    let state = { target: '', isPeerPowerful: null, action: '', frequency: '', pain: '' };
+
+    // --- STAGE 1 로직 ---
+    function selectTarget(target, btn) {
+        clearSelection(btn.parentElement.querySelectorAll('.option-btn:not(.peer-opt)'));
+        btn.classList.add('selected');
+        state.target = target;
+        
+        document.getElementById('peer-question').style.display = 'none';
+        document.getElementById('external-alert').style.display = 'none';
+        document.getElementById('btn-next1').style.display = 'block';
+        state.isPeerPowerful = null;
+
+        if (target === 'peer') {
+            document.getElementById('peer-question').style.display = 'block';
+            document.getElementById('btn-next1').style.display = 'none'; // 질문 답하기 전엔 숨김
+        } else if (target === 'external') {
+            document.getElementById('external-alert').style.display = 'block';
+            document.getElementById('btn-next1').style.display = 'none'; // 다음 단계 진행 불가
+        }
+    }
+
+    function setPeerPower(isPowerful, btn) {
+        clearSelection(document.querySelectorAll('.peer-opt'));
+        btn.classList.add('selected');
+        state.isPeerPowerful = isPowerful;
+        document.getElementById('btn-next1').style.display = 'block';
+    }
+
+    function goToStage2() {
+        document.getElementById('stage1').classList.remove('active');
+        document.getElementById('stage2').classList.add('active');
+    }
+
+    // --- STAGE 2 로직 ---
+    function selectAction(action, btn) {
+        clearSelection(document.querySelectorAll('.st2-opt'));
+        btn.classList.add('selected');
+        state.action = action;
+        document.getElementById('frequency-question').style.display = 'block';
+        document.getElementById('btn-next2').style.display = 'none'; // 빈도 선택 전엔 숨김
+        clearSelection(document.querySelectorAll('.freq-opt'));
+        state.frequency = '';
+    }
+
+    function setFrequency(freq, btn) {
+        clearSelection(document.querySelectorAll('.freq-opt'));
+        btn.classList.add('selected');
+        state.frequency = freq;
+        document.getElementById('btn-next2').style.display = 'block';
+    }
+
+    function goToStage3() {
+        document.getElementById('stage2').classList.remove('active');
+        document.getElementById('stage3').classList.add('active');
+    }
+
+    // --- STAGE 3 및 결과 계산 로직 ---
+    function setPain(pain, btn) {
+        clearSelection(document.querySelectorAll('.st3-opt'));
+        btn.classList.add('selected');
+        state.pain = pain;
+        document.getElementById('btn-submit').style.display = 'block';
+    }
+
+    function calculateResult() {
+        let score = 0;
+        let desc = "";
+
+        // 1. 지위의 우위 평가 (가중치 30%)
+        if (['boss', 'senior', 'group'].includes(state.target)) score += 30;
+        else if (state.target === 'peer' && state.isPeerPowerful) score += 25;
+        else if (state.target === 'peer' && !state.isPeerPowerful) score += 10; // 우위성 부족
+
+        // 2. 행위 및 지속성 평가 (가중치 50%)
+        if (state.action === 'physical' || state.action === 'verbal') {
+            if (state.frequency === 'once') score += 20; // 1회성이라도 심각
+            else score += 50;
+        } else {
+            if (state.frequency === 'once') score += 10; // 단발성 사적 심부름 등은 낮음
+            else if (state.frequency === 'sometimes') score += 30;
+            else score += 50; // 지속적이면 만점
+        }
+
+        // 3. 고통 발생 (가중치 20%)
+        if (state.pain === 'severe') score += 20;
+        else score += 10;
+
+        // 결과 텍스트 분기
+        if (score >= 80) {
+            desc = "<strong>법적 괴롭힘 성립 요건을 대부분 충족합니다.</strong><br><br>현재 겪고 계신 상황은 단순한 사내 갈등이 아닌 법적으로 구제받아야 할 명백한 폭력입니다. 퇴사하시기 전에 반드시 메신저 캡처, 녹음, 일지 등 객관적 증거를 확보하시고 노무사와 대응 전략을 논의하십시오.";
+        } else if (score >= 50) {
+            desc = "<strong>괴롭힘으로 인정될 여지가 상당히 있습니다.</strong><br><br>다만, '지속성'이나 '업무상 필요성 부재'를 입증하기 위한 증거 수집이 관건입니다. 상대방의 행위가 일시적 감정 표현이 아님을 증명할 수 있는 기록을 매일 남겨두시길 권장합니다.";
+        } else {
+            desc = "<strong>법적 요건을 충족하기에는 다소 부족할 수 있습니다.</strong><br><br>직장 내 갈등으로는 보이나, 법적인 '지위의 우위'나 '지속성' 요건에서 다툼의 여지가 큽니다. 사내 고충처리 위원회를 활용하시거나, 우울감이 심하시다면 전문가의 심리 상담을 먼저 받아보시길 권합니다.";
+        }
+
+        document.getElementById('score').innerText = score + "%";
+        document.getElementById('result-desc').innerHTML = desc;
+        document.getElementById('final-result').style.display = 'block';
+        document.getElementById('final-result').scrollIntoView({behavior: "smooth"});
+    }
+
+    // 유틸: 버튼 선택 초기화
+    function clearSelection(elements) {
+        elements.forEach(el => el.classList.remove('selected'));
+    }
+</script>
+
+</body>
+</html>

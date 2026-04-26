@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>워크닥터(WorkDoctor) | 대한민국 1등 직장인 권리보호 플랫폼</title>
+    <style>
+        /* [모던 UI/UX 기본 설정] */
+        :root {
+            --primary-color: #1A365D; /* 신뢰감 있는 네이비 */
+            --accent-color: #3182CE;  /* 포인트 블루 */
+            --bg-color: #F7FAFC;
+            --text-main: #2D3748;
+            --text-sub: #718096;
+            --card-bg: #FFFFFF;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Pretendard', -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* 헤더 네비게이션 */
+        header {
+            background-color: var(--primary-color);
+            padding: 20px 0;
+            color: white;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        header h1 { font-size: 28px; font-weight: 800; letter-spacing: 1px; }
+        header p { font-size: 14px; margin-top: 5px; opacity: 0.8; }
+
+        /* 메인 히어로 배너 */
+        .hero {
+            background: linear-gradient(135deg, #1A365D 0%, #3182CE 100%);
+            color: white;
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .hero h2 { font-size: 32px; margin-bottom: 15px; line-height: 1.4; }
+        .hero p { font-size: 16px; opacity: 0.9; line-height: 1.5; }
+
+        /* 콘텐츠 그리드 레이아웃 */
+        .container {
+            max-width: 1000px;
+            margin: -30px auto 50px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        /* 개별 서비스 카드 */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            border-top: 4px solid transparent;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            border-top: 4px solid var(--accent-color);
+        }
+
+        .card-icon { font-size: 40px; margin-bottom: 15px; }
+        .card-title { font-size: 20px; font-weight: bold; margin-bottom: 10px; color: var(--primary-color); }
+        .card-desc { font-size: 14px; color: var(--text-sub); line-height: 1.5; flex-grow: 1; }
+        
+        /* 뱃지 디자인 */
+        .badge {
+            display: inline-block;
+            background: #E53E3E;
+            color: white;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        .badge-soon { background: #718096; }
+
+        /* B2B 컨설팅 유도 배너 */
+        .b2b-banner {
+            max-width: 1000px;
+            margin: 0 auto 50px auto;
+            background: #EDF2F7;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin-left: 20px;
+            margin-right: 20px;
+        }
+        .b2b-banner h3 { color: var(--primary-color); margin-bottom: 10px; }
+        .b2b-banner p { color: var(--text-sub); font-size: 15px; margin-bottom: 20px; }
+        .btn-b2b {
+            background: var(--primary-color);
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            display: inline-block;
+            transition: 0.3s;
+        }
+        .btn-b2b:hover { background: #2A4365; }
+
+        /* 푸터 */
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            background: white;
+            color: var(--text-sub);
+            font-size: 13px;
+            border-top: 1px solid #E2E8F0;
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.addEventListener('keydown', function(e) {
+            if(e.keyCode == 123) { e.preventDefault(); return false; } 
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) { e.preventDefault(); return false; } 
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) { e.preventDefault(); return false; } 
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) { e.preventDefault(); return false; } 
+            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) { e.preventDefault(); return false; } 
+        });
+    </script>
+
+    <header>
+        <h1>WorkDoctor</h1>
+        <p>노무사가 만든 직장인 권리보호 플랫폼</p>
+    </header>
+
+    <div class="hero">
+        <h2>복잡한 노동법,<br>이제 클릭 한 번으로 진단하세요.</h2>
+        <p>퇴직금, 실업급여, 직장 내 괴롭힘까지.<br>내 권리를 찾고 정당한 보상을 계산해 드립니다.</p>
+    </div>
+
+    <div class="container">
+        <a href="harassment.html" class="card">
+            <div class="card-icon">🚨</div>
+            <div class="card-title">직장 내 괴롭힘 판독기 <span class="badge">HOT</span></div>
+            <div class="card-desc">"이거 괴롭힘 맞나요?" MBA 출신 노무사의 법적 판단 로직으로 내 억울함의 성립 확률을 진단해 드립니다.</div>
+        </a>
+
+        <a href="#" class="card" onclick="alert('현재 개발 중인 기능입니다. 곧 오픈됩니다!'); return false;">
+            <div class="card-icon">💸</div>
+            <div class="card-title">포괄임금제 시급 해체기 <span class="badge badge-soon">UPCOMING</span></div>
+            <div class="card-desc">야근 수당이 녹아있는 내 연봉, 진짜 시급으로 환산하면 얼마일까? 최저임금 위반 여부를 계산합니다.</div>
+        </a>
+
+        <a href="#" class="card" onclick="alert('현재 개발 중인 기능입니다. 곧 오픈됩니다!'); return false;">
+            <div class="card-icon">🧮</div>
+            <div class="card-title">퇴직금/실업급여 계산기 <span class="badge badge-soon">UPCOMING</span></div>
+            <div class="card-desc">퇴사를 고민 중이신가요? 내가 받을 수 있는 정확한 퇴직금과 실업급여 수급 자격을 확인해 보세요.</div>
+        </a>
+
+        <a href="#" class="card" onclick="alert('현재 개발 중인 기능입니다. 곧 오픈됩니다!'); return false;">
+            <div class="card-icon">🏖️</div>
+            <div class="card-title">스마트 연차 휴가 계산기 <span class="badge badge-soon">UPCOMING</span></div>
+            <div class="card-desc">입사일 기준? 회계연도 기준? 헷갈리는 내 남은 연차 개수와 미사용 연차수당을 정확히 뽑아드립니다.</div>
+        </a>
+
+        <a href="#" class="card" onclick="alert('현재 개발 중인 기능입니다. 곧 오픈됩니다!'); return false;">
+            <div class="card-icon">📄</div>
+            <div class="card-title">노동청 진정서 자동 생성 <span class="badge badge-soon">UPCOMING</span></div>
+            <div class="card-desc">질문에 답만 하면, 노동청 진정서와 내용증명 문서가 법적 효력을 갖춘 PDF로 자동 생성됩니다.</div>
+        </a>
+
+        <a href="#" class="card" onclick="alert('현재 개발 중인 기능입니다. 곧 오픈됩니다!'); return false;">
+            <div class="card-icon">🗣️</div>
+            <div class="card-title">익명 대나무숲 게시판 <span class="badge badge-soon">UPCOMING</span></div>
+            <div class="card-desc">임금체불, 진상 상사 고발! 철저한 익명이 보장되는 직장인 사이다 커뮤니티. 노무사가 직접 답글을 달아드립니다.</div>
+        </a>
+    </div>
+
+    <div class="b2b-banner">
+        <h3>🏢 기업 인사담당자 및 대표님이신가요?</h3>
+        <p>근로계약서, 취업규칙 정비부터 노동청 사건 대리까지.<br>100억 기업으로 가기 위한 리스크 제로 HR 시스템, MBA 출신 공인노무사가 직접 컨설팅합니다.</p>
+        <a href="#" class="btn-b2b" onclick="alert('프라이빗 컨설팅 신청 페이지로 연결됩니다.'); return false;">기업 자문 및 컨설팅 문의하기</a>
+    </div>
+
+    <footer>
+        <p><strong>WorkDoctor</strong> | 노동법률센터</p>
+        <p style="margin-top: 10px;">본 사이트의 진단 로직 및 콘텐츠를 무단 크롤링하거나 상업적으로 이용할 경우 관련 법령에 의해 민형사상 책임을 질 수 있습니다.</p>
+        <p style="margin-top: 10px;">Copyright © 2024 워크닥터. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>
