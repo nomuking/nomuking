@@ -48,7 +48,6 @@ function triggerLoading(msg, duration, callback) {
 }
 
 function updateSidebarUI(activeStep) {
-    // 🚨 여기서 배열이 빠져서 오류가 났었습니다! 완벽히 수정했습니다.
    .forEach(step => {
         let el = document.getElementById('sb-st' + step);
         if (el) {
@@ -163,7 +162,6 @@ function setFrequency(freq, textValue, btn) {
     btn.classList.add('selected');
     state.frequency = freq;
     
-    // 빈도 선택 시 카테고리 텍스트와 조합
     summaryText.st2 = summaryText.st2.split(' / ') + ' / ' + textValue; 
     updateSidebarUI(2);
 
@@ -201,7 +199,7 @@ function togglePain(painValue, textValue, btn) {
     updateSidebarUI(3);
 }
 
-// --- 결과 계산 ---
+// --- 결과 산출 ---
 function calculateResult() {
     document.getElementById('stage3-content').style.display = 'none';
     summaryText.st3 = "진단 완료";
@@ -225,7 +223,7 @@ function calculateResult() {
 
     if (score > 100) score = 100;
 
-    // 과락 로직
+    // 🚨 과락 로직
     if (!hasSuperiority) {
         score = Math.min(score, 10);
     } 
