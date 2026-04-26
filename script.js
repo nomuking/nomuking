@@ -223,7 +223,7 @@ function calculateResult() {
 
     if (score > 100) score = 100;
 
-    // 🚨 과락 로직
+    // 과락 로직 
     if (!hasSuperiority) {
         score = Math.min(score, 10);
     } 
