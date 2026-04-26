@@ -1,12 +1,14 @@
-// 개발자 도구 및 복사 방지 로직
 document.addEventListener('contextmenu', event => event.preventDefault());
 
 let state = { 
     target: '', isPeerPowerful: null, 
-    actionCategory: '', deepAnswers: [], frequency: '', isMulti: null, pain: '' 
+    actionCategory: '', deepAnswers: [], frequency: '', isMulti: null, 
+    pain: [] // 3스테이지 복수 선택을 위한 배열
 };
 
+let summaryText = { st1: '선택 대기 중', st2: '선택 대기 중', st3: '선택 대기 중' };
 let currentDeepIndex = 0;
+let highestStageReached = 1;
 
 const deepQuestions = {
     verbal: [
@@ -39,18 +41,45 @@ const deepQuestions = {
 function triggerLoading(msg, duration, callback) {
     document.getElementById('loading-msg').innerText = msg;
     document.getElementById('loading-screen').style.display = 'flex';
-    
     setTimeout(() => {
         document.getElementById('loading-screen').style.display = 'none';
         callback();
     }, duration);
 }
 
+function updateSidebarUI(activeStep) {
+   .forEach(step => {
+        let el = document.getElementById('sb-st' + step);
+        el.classList.remove('active');
+        if (step <= highestStageReached) el.classList.remove('locked');
+        if (step === activeStep) el.classList.add('active');
+        
+        document.getElementById('sb-val' + step).innerText = summaryText['st' + step];
+    });
+}
+
+function jumpToStage(step) {
+    if (step > highestStageReached) return; // 도달하지 않은 단계는 클릭 불가
+
+    document.querySelectorAll('.step-section').forEach(el => el.style.display = 'none');
+    document.getElementById('stage' + step).style.display = 'block';
+    
+    if (step === 3) {
+        document.getElementById('stage3-content').style.display = 'block';
+        document.getElementById('final-result').style.display = 'none';
+    }
+
+    updateSidebarUI(step);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 // --- STAGE 1 ---
-function selectTarget(target, btn) {
-    clearSelection(btn.parentElement.querySelectorAll('.option-btn:not(.peer-opt)'));
+function selectTarget(target, textValue, btn) {
+    clearSelection(document.querySelectorAll('.st1-opt'));
     btn.classList.add('selected');
     state.target = target;
+    summaryText.st1 = textValue;
+    updateSidebarUI(1);
     
     document.getElementById('peer-question').style.display = 'none';
     document.getElementById('external-alert').style.display = 'none';
@@ -63,34 +92,34 @@ function selectTarget(target, btn) {
     } else if (target === 'external') {
         document.getElementById('external-alert').style.display = 'block';
         document.getElementById('btn-next1').style.display = 'none'; 
+    } else {
+        highestStageReached = Math.max(highestStageReached, 2);
     }
 }
 
-function setPeerPower(isPowerful, btn) {
+function setPeerPower(isPowerful, textValue, btn) {
     clearSelection(document.querySelectorAll('.peer-opt'));
     btn.classList.add('selected');
     state.isPeerPowerful = isPowerful;
+    summaryText.st1 = textValue;
+    highestStageReached = Math.max(highestStageReached, 2);
+    updateSidebarUI(1);
     document.getElementById('btn-next1').style.display = 'block';
 }
 
-function goToStage2() {
-    document.getElementById('stage1').classList.remove('active');
-    document.getElementById('stage2').classList.add('active');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
 // --- STAGE 2 ---
-function startDeepDive(category, btn) {
+function startDeepDive(category, textValue, btn) {
     clearSelection(document.querySelectorAll('.st2-opt'));
     btn.classList.add('selected');
-    
     state.actionCategory = category;
+    summaryText.st2 = textValue; // 기본 유형 저장
+    updateSidebarUI(2);
+
     state.deepAnswers = [];
     currentDeepIndex = 0;
 
     document.getElementById('category-selection').style.display = 'none';
     document.getElementById('deep-dive-section').style.display = 'block';
-    
     renderDeepQuestion();
 }
 
@@ -123,105 +152,121 @@ function handleDeepAnswer(ansIndex, btn) {
     }
 }
 
-function setFrequency(freq, btn) {
+function setFrequency(freq, textValue, btn) {
     clearSelection(document.querySelectorAll('.freq-opt'));
     btn.classList.add('selected');
     state.frequency = freq;
+    
+    summaryText.st2 = summaryText.st2.split(' / ') + ' / ' + textValue; // 유형 + 빈도 텍스트 조합
+    updateSidebarUI(2);
+
+    document.getElementById('multi-question').style.display = 'block';
+}
+
+function setMulti(isMulti, textValue, btn) {
+    clearSelection(document.querySelectorAll('.multi-opt'));
+    btn.classList.add('selected');
+    state.isMulti = isMulti;
+    highestStageReached = Math.max(highestStageReached, 3);
     document.getElementById('btn-next2').style.display = 'block';
 }
 
-function goToStage3() {
-    document.getElementById('stage2').classList.remove('active');
-    document.getElementById('stage3').classList.add('active');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// --- STAGE 3 & Result ---
-function setPain(pain, btn) {
-    clearSelection(document.querySelectorAll('.st3-opt'));
-    btn.classList.add('selected');
-    state.pain = pain;
-    document.getElementById('btn-submit').style.display = 'block';
-}
-
-function calculateResult() {
-    let score = 0;
-    let desc = "";
-    let hasSuperiority = true; // 우위성 충족 여부 플래그
-
-    // 1. 우위성 판단
-    if (['employer', 'superior', 'senior', 'group'].includes(state.target)) {
-        score += 30;
-    } else if (state.target === 'peer' && state.isPeerPowerful) {
-        score += 25; 
-    } else if (state.target === 'peer' && !state.isPeerPowerful) {
-        score += 0; 
-        hasSuperiority = false; // 과락 트리거 발동
+// --- STAGE 3 (복수 선택 로직) ---
+function togglePain(painValue, textValue, btn) {
+    const index = state.pain.indexOf(painValue);
+    
+    if (index > -1) {
+        // 이미 있으면 배열에서 제거, CSS 해제
+        state.pain.splice(index, 1);
+        btn.classList.remove('selected');
+    } else {
+        // 없으면 배열에 추가, CSS 적용
+        state.pain.push(painValue);
+        btn.classList.add('selected');
     }
 
-    // 2. 행위 수위 및 지속성
+    // 선택 항목이 1개라도 있으면 제출 버튼 활성화
+    if (state.pain.length > 0) {
+        document.getElementById('btn-submit').style.display = 'block';
+        summaryText.st3 = state.pain.length + "개 항목 선택";
+    } else {
+        document.getElementById('btn-submit').style.display = 'none';
+        summaryText.st3 = "선택 대기 중";
+    }
+    updateSidebarUI(3);
+}
+
+// --- 최종 결과 계산 (과락 로직 반영) ---
+function calculateResult() {
+    // 결과 도출 시, 3단계 화면(질문들)을 완전히 숨김
+    document.getElementById('stage3-content').style.display = 'none';
+    summaryText.st3 = "진단 완료";
+    updateSidebarUI(3);
+
+    let score = 50; // 기본 점수
+    let desc = "";
+    let hasSuperiority = true; 
+
+    // [로직] 지위 우위성 체크
+    if (['employer', 'superior', 'senior', 'group'].includes(state.target)) score += 20;
+    else if (state.target === 'peer' && state.isPeerPowerful) score += 10;
+    else if (state.target === 'peer' && !state.isPeerPowerful) hasSuperiority = false; // 과락 1 대상
+
+    // [로직] 심층 질문 수위 합산 (가중치 최소화)
     let deepSeverity = 0;
     state.deepAnswers.forEach(ans => {
-        if(ans === 0) deepSeverity += 10;
-        else if(ans === 1) deepSeverity += 7;
-        else deepSeverity += 4;
+        if(ans === 0) deepSeverity += 5;
+        else if(ans === 1) deepSeverity += 3;
     });
+    score += deepSeverity;
+    if (state.isMulti) score += 5;
 
-    let actionScore = 0;
-    if (state.actionCategory === 'physical') {
-        if (state.frequency === 'once') actionScore = (20 + deepSeverity); 
-        else actionScore = 50;
-    } else {
-        if (state.frequency === 'once') actionScore = (10 + deepSeverity*0.5); 
-        else if (state.frequency === 'sometimes') actionScore = (25 + deepSeverity*0.5);
-        else actionScore = 50; 
-    }
-    score += actionScore;
-
-    // 3. 고통 정도
-    if (state.pain === 'severe_medical') score += 20;
-    else if (state.pain === 'severe_quit') score += 16;
-    else if (state.pain === 'moderate') score += 12;
-    else score += 5;
-
+    // 점수 최대 한도
     if (score > 100) score = 100;
 
-    // 🚨 우위성 과락 로직 (Knock-out)
+    // 🚨 [과락 로직 적용: 10%, 30%, 50%]
+    // 1. 우위성 결여 (10% 이하로 확 떨어뜨림)
     if (!hasSuperiority) {
-        score = Math.min(Math.round(score * 0.4), 45); 
+        score = Math.min(score, 10);
+    } 
+    // 2. 단발성 사건 (30% 이하로 확 떨어뜨림)
+    else if (state.frequency === 'once') {
+        score = Math.min(score, 30);
+    } 
+    // 3. 고통이 '일상 가능(mild)' 1개만 단독으로 선택된 경우 (50% 이하로 확 떨어뜨림)
+    else if (state.pain.length === 1 && state.pain === 'mild') {
+        score = Math.min(score, 45); // 50% 이하이므로 45를 최대치로 줌
     }
 
-    // 결과 산출 문구
-    if (!hasSuperiority) {
-        desc = "<strong>근로기준법상 '직장 내 괴롭힘'으로 인정되기 매우 어렵습니다.</strong><br><br>";
-        desc += "직장 내 괴롭힘이 법적으로 성립하려면 반드시 <strong>'지위 또는 관계의 우위'</strong>를 이용해야 합니다. 동급자나 후배이면서 사내 입지(우위성)가 명확하지 않다면 관할 노동청 진정 요건을 충족하기 어렵습니다.<br><br>";
-        desc += "다만, 겪으신 행위의 수위에 따라 형법상 폭행, 모욕, 명예훼손이나 민사상 불법행위 책임을 물을 수 있으므로 다른 방향의 법적 대응을 검토하시기 바랍니다.";
+    // 결과 텍스트 분기 (과락 사유 명시)
+    if (score <= 10) {
+        desc = "<strong>근로기준법상 '직장 내 괴롭힘'으로 인정받을 확률이 극히 희박합니다. (10% 이하)</strong><br><br>";
+        desc += "법적 요건의 1순위인 <strong>'지위 또는 관계의 우위'</strong>가 결여되어 있습니다. 동급자나 후배이면서 사내 입지가 강하지 않다면 노동청 진정 대상이 되지 않습니다.<br>다만, 행위 수위에 따라 형법상 모욕, 폭행 등의 별도 대응을 검토하십시오.";
+    } else if (score <= 30) {
+        desc = "<strong>괴롭힘으로 인정받기에는 법적 요건이 많이 부족합니다. (30% 이하)</strong><br><br>";
+        desc += "사건이 <strong>단발성(1회성)</strong>에 그친 경우, 객관적인 근무환경 악화를 입증하기 매우 어렵습니다. 사내 고충처리 위원회를 활용하여 일회성 갈등을 중재하는 것이 실무적으로 가장 유리합니다.";
+    } else if (score <= 50) {
+        desc = "<strong>법적 다툼의 여지가 크며, 인정 확률이 높지 않습니다. (50% 이하)</strong><br><br>";
+        desc += "행위의 부당함이 있더라도 피해의 정도가 <strong>일상생활이 가능한 수준</strong>이라면, 노동청 조사 시 객관적인 피해 요건(근무환경 악화)에서 불인정 판정을 받을 리스크가 큽니다.";
     } else if (score >= 80) {
         desc = "<strong>직장 내 괴롭힘에 해당할 가능성이 매우 높습니다.</strong><br><br>";
-        if (state.target === 'employer') {
-            desc += "<span style='color:#E53E3E;'>※ 가해자가 '대표이사/등기이사'인 경우, 노동청 사실 인정 시 사업주에게 최대 1,000만 원의 과태료가 즉시 부과됩니다.</span><br><br>";
-        }
-        if (state.pain === 'severe_medical') {
-            desc += "현재 병원 진료 기록이 있으시므로, 이는 노동청 진정 및 산재 신청 시 결정적인 증거로 활용될 수 있습니다.<br><br>";
-        }
-        desc += "객관적 증거(녹취, 메신저 캡처, 진료기록 등)를 바탕으로 전문가와 함께 법적 대응 전략을 논의하시길 권장합니다.";
-    } else if (score >= 55) {
-        desc = "<strong>직장 내 괴롭힘에 해당할 가능성이 상당합니다.</strong><br><br>";
-        desc += "다만, 향후 대응 시 사측에서 '업무상 필요성'이나 '정당한 권한 행사'를 주장할 수 있습니다. 따라서 해당 행위가 부당함을 입증할 수 있는 기록(일지 등)을 꾸준히 남겨두십시오.";
+        if (state.target === 'employer') desc += "<span style='color:#E53E3E;'>※ 가해자가 법적 사용자(대표/등기이사)이므로 노동청 인정 시 1,000만 원 이하의 과태료 대상입니다.</span><br><br>";
+        if (state.pain.includes('severe_medical')) desc += "병원 진료 기록은 산재 신청 및 진정에 결정적 증거가 됩니다. 지금 즉시 관련 증거를 취합하여 전문가와 대응하십시오.";
     } else {
-        desc = "<strong>직장 내 괴롭힘으로 인정받기에는 법적 다툼의 여지가 존재합니다.</strong><br><br>직장 내 갈등 요소는 확인되나, 법적인 객관적 요건(업무상 적정범위 초과 여부 등) 입증에서 다소 어려움이 예상됩니다. 사내 고충처리 절차를 먼저 밟아보시거나, 스트레스 완화를 위한 전문가 상담을 권장합니다.";
+        desc = "<strong>직장 내 괴롭힘에 해당할 가능성이 상당합니다.</strong><br><br>";
+        desc += "다만, 회사 측에서 '정당한 업무 지시였다'고 방어할 논리가 존재하므로, 해당 행위의 부당함을 입증할 구체적인 기록(일지, 메신저 등) 보완이 필수적입니다.";
     }
 
-    document.getElementById('btn-submit').style.display = 'none';
     document.getElementById('score').innerText = Math.round(score) + "%";
     document.getElementById('result-desc').innerHTML = desc;
     document.getElementById('final-result').style.display = 'block';
 }
 
-// --- 리셋 로직 ---
 function resetTest() {
-    state = { target: '', isPeerPowerful: null, actionCategory: '', deepAnswers: [], frequency: '', pain: '' };
+    state = { target: '', isPeerPowerful: null, actionCategory: '', deepAnswers: [], frequency: '', isMulti: null, pain: [] };
+    summaryText = { st1: '선택 대기 중', st2: '선택 대기 중', st3: '선택 대기 중' };
     currentDeepIndex = 0;
+    highestStageReached = 1;
 
     clearSelection(document.querySelectorAll('.option-btn'));
 
@@ -232,15 +277,15 @@ function resetTest() {
     document.getElementById('category-selection').style.display = 'block';
     document.getElementById('deep-dive-section').style.display = 'none';
     document.getElementById('frequency-section').style.display = 'none';
+    document.getElementById('multi-question').style.display = 'none';
     document.getElementById('btn-next2').style.display = 'none';
 
+    document.getElementById('stage3-content').style.display = 'block';
     document.getElementById('btn-submit').style.display = 'none';
     document.getElementById('final-result').style.display = 'none';
 
-    document.querySelectorAll('.step-section').forEach(el => el.classList.remove('active'));
-    document.getElementById('stage1').classList.add('active');
-    
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    jumpToStage(1);
+    updateSidebarUI(1);
 }
 
 function clearSelection(elements) {

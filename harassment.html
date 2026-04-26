@@ -27,16 +27,57 @@
             user-select: none;
         }
 
+        /* ---------------- 사이드바 + 메인 레이아웃 ---------------- */
+        .layout-wrapper {
+            display: flex;
+            max-width: 950px;
+            width: 100%;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .sidebar {
+            background: white;
+            width: 280px;
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 20px;
+            flex-shrink: 0;
+        }
+
+        .sb-header { font-size: 16px; font-weight: bold; color: var(--primary); margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #EDF2F7; }
+        
+        .sb-item {
+            margin-bottom: 15px; padding: 12px; border-radius: 8px; background: #F7FAFC; 
+            cursor: pointer; transition: 0.2s; border: 1px solid transparent;
+        }
+        .sb-item:hover { border-color: var(--secondary); background: white; }
+        .sb-item.active { border-color: var(--secondary); background: #EBF8FF; }
+        .sb-item.locked { opacity: 0.5; cursor: not-allowed; }
+        .sb-item.locked:hover { border-color: transparent; background: #F7FAFC; }
+        
+        .sb-title { font-size: 13px; font-weight: bold; color: var(--primary); margin-bottom: 5px; }
+        .sb-val { font-size: 13px; color: #718096; line-height: 1.4; word-break: keep-all; }
+
         .container {
             background: white;
-            max-width: 600px;
-            width: 100%;
+            flex: 1;
             padding: 30px;
             border-radius: var(--border-radius);
             box-shadow: 0 10px 25px rgba(0,0,0,0.05);
             position: relative;
         }
 
+        /* 반응형: 모바일에서는 사이드바가 위로 올라가거나 가려지도록 처리 */
+        @media (max-width: 768px) {
+            .layout-wrapper { flex-direction: column; }
+            .sidebar { width: 100%; position: static; padding: 15px; }
+            .sb-item { margin-bottom: 10px; }
+        }
+
+        /* ---------------- 기존 스타일 ---------------- */
         h1 { color: var(--primary); text-align: center; font-size: 24px; margin-bottom: 5px; }
         p.desc { text-align: center; color: #718096; font-size: 14px; margin-bottom: 30px; }
 
@@ -50,19 +91,10 @@
         .depth-indicator { font-size: 12px; color: var(--secondary); font-weight: bold; margin-bottom: 5px; }
 
         .option-btn {
-            display: block;
-            width: 100%;
-            padding: 15px;
-            margin-bottom: 10px;
-            background: #EDF2F7;
-            border: 2px solid transparent;
-            border-radius: 8px;
-            font-size: 14px;
-            text-align: left;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: #4A5568;
-            line-height: 1.4;
+            display: block; width: 100%; padding: 15px; margin-bottom: 10px;
+            background: #EDF2F7; border: 2px solid transparent; border-radius: 8px;
+            font-size: 14px; text-align: left; cursor: pointer; transition: all 0.2s;
+            color: #4A5568; line-height: 1.4;
         }
         .option-btn:hover { background: #E2E8F0; }
         .option-btn.selected { background: #EBF8FF; border-color: var(--secondary); color: var(--secondary); font-weight: bold; }
@@ -81,27 +113,12 @@
         .result-score { font-size: 38px; color: #E53E3E; font-weight: 900; margin: 10px 0; }
         .notice-box { background: #EBF8FF; border-radius: 8px; padding: 15px; margin-top: 20px; font-size: 13px; color: #2B6CB0; text-align: left; line-height: 1.5; }
 
-        /* 로딩 화면 UI */
         .loading-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.9);
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            border-radius: var(--border-radius);
-            z-index: 100;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.9); display: none; flex-direction: column;
+            justify-content: center; align-items: center; border-radius: var(--border-radius); z-index: 100;
         }
-        .spinner {
-            border: 4px solid #EDF2F7;
-            border-top: 4px solid var(--secondary);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin-bottom: 15px;
-        }
+        .spinner { border: 4px solid #EDF2F7; border-top: 4px solid var(--secondary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .loading-text { font-weight: bold; color: var(--primary); font-size: 16px; }
 
@@ -110,95 +127,123 @@
 </head>
 <body>
 
-<div class="container">
-    <div id="loading-screen" class="loading-overlay">
-        <div class="spinner"></div>
-        <div id="loading-msg" class="loading-text">분석 중입니다...</div>
+<div class="layout-wrapper">
+    <div class="sidebar" id="sidebar">
+        <div class="sb-header">📋 진단 현황</div>
+        <div class="sb-item active" id="sb-st1" onclick="jumpToStage(1)">
+            <div class="sb-title">1단계. 가해자 지위</div>
+            <div class="sb-val" id="sb-val1">진행 중</div>
+        </div>
+        <div class="sb-item locked" id="sb-st2" onclick="jumpToStage(2)">
+            <div class="sb-title">2단계. 부당 행위 파악</div>
+            <div class="sb-val" id="sb-val2">대기 중</div>
+        </div>
+        <div class="sb-item locked" id="sb-st3" onclick="jumpToStage(3)">
+            <div class="sb-title">3단계. 피해 입증</div>
+            <div class="sb-val" id="sb-val3">대기 중</div>
+        </div>
     </div>
 
-    <h1>🚨 직장 내 괴롭힘 정밀 진단</h1>
-    <p class="desc">NomuKing의 법적 판단 로직으로 정확히 진단합니다.</p>
-
-    <div id="stage1" class="step-section active">
-        <div class="question-title">1단계. 당신을 가장 힘들게 하는 사람은 누구입니까?</div>
-        
-        <button class="option-btn" onclick="selectTarget('employer', this)">👑 등기이사, 대표이사 (법적 사용자)</button>
-        <button class="option-btn" onclick="selectTarget('superior', this)">👨‍💼 직속 상사 또는 직급이 높은 사람</button>
-        <button class="option-btn" onclick="selectTarget('senior', this)">🧑‍💻 나보다 먼저 입사한 선배 직원</button>
-        <button class="option-btn" onclick="selectTarget('group', this)">👥 다수의 무리 (집단 따돌림)</button>
-        <button class="option-btn" onclick="selectTarget('peer', this)">🤝 동일한 직급의 동료 또는 후배</button>
-        <button class="option-btn" onclick="selectTarget('external', this)">🏢 외부인 (고객, 거래처, 원청 등)</button>
-
-        <div id="peer-question" style="display: none; margin-top: 20px; padding-top: 15px; border-top: 1px dashed #CBD5E0;">
-            <div class="sub-question">직급이 같거나 낮더라도, 그 사람이 사내에서 입지가 더 강한가요?</div>
-            <button class="option-btn peer-opt" onclick="setPeerPower(true, this)">네, 정규직이거나 나이/학벌 등 입지가 훨씬 강합니다.</button>
-            <button class="option-btn peer-opt" onclick="setPeerPower(false, this)">아니오, 저와 조건이 거의 비슷합니다.</button>
+    <div class="container">
+        <div id="loading-screen" class="loading-overlay">
+            <div class="spinner"></div>
+            <div id="loading-msg" class="loading-text">분석 중입니다...</div>
         </div>
 
-        <div id="external-alert" class="alert-box">
-            <strong>⚠️ [산업안전보건법 적용 대상]</strong><br>
-            외부인에 의한 괴롭힘은 근로기준법이 아닌 '산업안전보건법' 대상입니다. 사측에 즉각적인 보호 조치를 강력히 요구할 수 있습니다.
-        </div>
+        <h1>🚨 직장 내 괴롭힘 정밀 진단</h1>
+        <p class="desc">NomuKing의 법적 판단 로직으로 정확히 진단합니다.</p>
 
-        <button id="btn-next1" class="btn-next" onclick="triggerLoading('분석 중입니다...', 500, goToStage2)">다음 단계로 (유형 진단)</button>
-    </div>
+        <div id="stage1" class="step-section active">
+            <div class="question-title">1단계. 당신을 가장 힘들게 하는 사람은 누구입니까?</div>
+            <button class="option-btn st1-opt" onclick="selectTarget('employer', '대표이사/등기이사', this)">👑 등기이사, 대표이사 (법적 사용자)</button>
+            <button class="option-btn st1-opt" onclick="selectTarget('superior', '직속 상사/고직급자', this)">👨‍💼 직속 상사 또는 직급이 높은 사람</button>
+            <button class="option-btn st1-opt" onclick="selectTarget('senior', '선배 직원', this)">🧑‍💻 나보다 먼저 입사한 선배 직원</button>
+            <button class="option-btn st1-opt" onclick="selectTarget('group', '다수의 무리(집단)', this)">👥 다수의 무리 (집단 따돌림)</button>
+            <button class="option-btn st1-opt" onclick="selectTarget('peer', '동급자/후배', this)">🤝 동일한 직급의 동료 또는 후배</button>
+            <button class="option-btn st1-opt" onclick="selectTarget('external', '외부인', this)">🏢 외부인 (고객, 거래처, 원청 등)</button>
 
-    <div id="stage2" class="step-section">
-        <div class="question-title">2단계. 구체적으로 어떤 부당함을 겪으셨나요?</div>
-        <p style="font-size: 13px; color:#718096; margin-bottom:15px;">(가장 주된 괴롭힘 유형 하나를 선택해주세요)</p>
-        
-        <div id="category-selection">
-            <button class="option-btn st2-opt" onclick="startDeepDive('verbal', this)">💬 지속적인 폭언, 욕설, 인신공격 및 명예훼손</button>
-            <button class="option-btn st2-opt" onclick="startDeepDive('bullying', this)">👻 집단 따돌림, 의도적 소문 유포 및 투명인간 취급</button>
-            <button class="option-btn st2-opt" onclick="startDeepDive('private', this)">🙅‍♂️ 본래 업무와 무관한 사적 심부름, 사생활 침해</button>
-            <button class="option-btn st2-opt" onclick="startDeepDive('control', this)">🛑 의도적 업무 배제, 휴가 통제 및 과도한 감시</button>
-            <button class="option-btn st2-opt" onclick="startDeepDive('physical', this)">👊 신체적 위협, 폭력, 서류나 물건을 던지는 행위</button>
-        </div>
-
-        <div id="deep-dive-section" style="display:none; margin-top: 20px; padding-top: 15px; border-top: 1px dashed #CBD5E0;">
-            <div id="deep-indicator" class="depth-indicator">심층 분석 (1/3)</div>
-            <div id="deep-question-text" class="sub-question"></div>
-            <div id="deep-options"></div>
-        </div>
-
-        <div id="frequency-section" style="display:none; margin-top: 20px; padding-top: 15px; border-top: 1px dashed #CBD5E0;">
-            <div class="depth-indicator">발생 빈도 확인</div>
-            <div class="sub-question">이러한 상황은 얼마나 자주, 혹은 오래 발생했나요?</div>
-            <button class="option-btn freq-opt" onclick="setFrequency('once', this)">단발성 (1회 발생 후 현재는 멈춤)</button>
-            <button class="option-btn freq-opt" onclick="setFrequency('sometimes', this)">간헐적 발생 (한 달에 1~2회 등 이따금 발생)</button>
-            <button class="option-btn freq-opt" onclick="setFrequency('continuous', this)">지속적/반복적 (매주 지속되거나 수개월째 이어짐)</button>
-        </div>
-
-        <button id="btn-next2" class="btn-next" onclick="triggerLoading('사건의 맥락을 분석 중입니다...', 500, goToStage3)">다음 단계로 (피해 진단)</button>
-    </div>
-
-    <div id="stage3" class="step-section">
-        <div class="question-title">3단계. 현재 겪고 계신 피해와 고통의 정도는 어떠신가요?</div>
-        
-        <button class="option-btn st3-opt" onclick="setPain('severe_medical', this)">불면증, 우울증 등으로 병원 치료나 심리 상담을 받고 있습니다.</button>
-        <button class="option-btn st3-opt" onclick="setPain('severe_quit', this)">너무 고통스러워 진지하게 퇴사나 이직을 고민하고 있습니다.</button>
-        <button class="option-btn st3-opt" onclick="setPain('moderate', this)">스트레스로 인한 신체적 이상(두통 등)이 있거나 업무에 집중하기 어렵습니다.</button>
-        <button class="option-btn st3-opt" onclick="setPain('mild', this)">기분은 나쁘지만, 아직 참을 만하며 일상생활에 큰 지장은 없습니다.</button>
-
-        <button id="btn-submit" class="btn-submit" onclick="triggerLoading('NomuKing 알고리즘으로 최종 결과를 분석 중입니다...', 1000, calculateResult)">최종 결과 확인하기</button>
-
-        <div id="final-result" class="result-box" style="display:none;">
-            <h3>직장 내 괴롭힘 해당 가능성</h3>
-            <div id="score" class="result-score">0%</div>
-            <p id="result-desc" style="font-size: 15px; color: #4A5568; line-height: 1.6; text-align: left;"></p>
-            
-            <div class="notice-box">
-                <strong>💡 NomuKing 실무 가이드</strong><br>
-                직장 내 괴롭힘은 각각의 개별 행위(유형)마다 성립 여부를 따로 판단해야 합니다. 만약 다른 가해자나 다른 유형의 괴롭힘(예: 폭언 외에 부당한 사적 지시도 있는 경우)이 더 있다면, 아래 버튼을 눌러 해당 사안으로 다시 진단해 보시기 바랍니다.
+            <div id="peer-question" style="display: none; margin-top: 20px; padding-top: 15px; border-top: 1px dashed #CBD5E0;">
+                <div class="sub-question">직급이 같거나 낮더라도, 그 사람이 사내에서 입지가 더 강한가요?</div>
+                <button class="option-btn peer-opt" onclick="setPeerPower(true, '동급자(우위성 있음)', this)">네, 정규직이거나 나이/학벌 등 입지가 훨씬 강합니다.</button>
+                <button class="option-btn peer-opt" onclick="setPeerPower(false, '동급자(우위성 없음)', this)">아니오, 저와 조건이 거의 비슷하거나 별다른 우위성이 없습니다.</button>
             </div>
 
-            <button class="btn-reset" onclick="resetTest()">🔄 처음으로 돌아가기 (다른 사안 진단)</button>
-        </div>
-    </div>
+            <div id="external-alert" class="alert-box">
+                <strong>⚠️ [산업안전보건법 적용 대상]</strong><br>
+                외부인에 의한 괴롭힘은 근로기준법이 아닌 '산업안전보건법' 대상입니다. 사측에 즉각적인 보호 조치를 강력히 요구할 수 있습니다.
+            </div>
 
-    <div class="copyright">
-        본 판독기의 진단 알고리즘 및 저작물은 관련 법령에 의해 보호받고 있습니다.<br>
-        <strong>Copyright © 2024 NomuKing. 무단 도용 및 복제 시 민형사상 책임을 묻습니다.</strong>
+            <button id="btn-next1" class="btn-next" onclick="triggerLoading('분석 중입니다...', 500, () => jumpToStage(2))">다음 단계로 (유형 진단)</button>
+        </div>
+
+        <div id="stage2" class="step-section">
+            <div class="question-title">2단계. 구체적으로 어떤 부당함을 겪으셨나요?</div>
+            <p style="font-size: 13px; color:#718096; margin-bottom:15px;">(가장 주된 괴롭힘 유형 하나를 선택해주세요)</p>
+            
+            <div id="category-selection">
+                <button class="option-btn st2-opt" onclick="startDeepDive('verbal', '폭언 및 모욕', this)">💬 지속적인 폭언, 욕설, 인신공격 및 명예훼손</button>
+                <button class="option-btn st2-opt" onclick="startDeepDive('bullying', '집단 따돌림', this)">👻 집단 따돌림, 의도적 소문 유포 및 투명인간 취급</button>
+                <button class="option-btn st2-opt" onclick="startDeepDive('private', '사적 심부름', this)">🙅‍♂️ 본래 업무와 무관한 사적 심부름, 사생활 침해</button>
+                <button class="option-btn st2-opt" onclick="startDeepDive('control', '업무 통제', this)">🛑 의도적 업무 배제, 휴가 통제 및 과도한 감시</button>
+                <button class="option-btn st2-opt" onclick="startDeepDive('physical', '신체적 위협', this)">👊 신체적 위협, 폭력, 서류나 물건을 던지는 행위</button>
+            </div>
+
+            <div id="deep-dive-section" style="display:none; margin-top: 20px; padding-top: 15px; border-top: 1px dashed #CBD5E0;">
+                <div id="deep-indicator" class="depth-indicator">심층 분석 (1/3)</div>
+                <div id="deep-question-text" class="sub-question"></div>
+                <div id="deep-options"></div>
+            </div>
+
+            <div id="frequency-section" style="display:none; margin-top: 20px; padding-top: 15px; border-top: 1px dashed #CBD5E0;">
+                <div class="depth-indicator">발생 빈도 확인</div>
+                <div class="sub-question">이러한 상황은 얼마나 자주, 혹은 오래 발생했나요?</div>
+                <button class="option-btn freq-opt" onclick="setFrequency('once', '단발성', this)">단발성 (1회 발생 후 현재는 멈춤)</button>
+                <button class="option-btn freq-opt" onclick="setFrequency('sometimes', '간헐적', this)">간헐적 발생 (한 달에 1~2회 등 이따금 발생)</button>
+                <button class="option-btn freq-opt" onclick="setFrequency('continuous', '지속적', this)">지속적/반복적 (매주 지속되거나 수개월째 이어짐)</button>
+            </div>
+
+            <div id="multi-question" style="display:none; margin-top: 20px; padding-top: 15px; border-top: 1px dashed #CBD5E0;">
+                <div class="depth-indicator">복합 피해 확인</div>
+                <div class="sub-question">위에서 답하신 주된 괴롭힘 외에도, 다른 유형의 부당한 대우를 동시에 겪고 계신가요?</div>
+                <button class="option-btn multi-opt" onclick="setMulti(true, '복합적 발생', this)">네, 폭언, 따돌림, 부당지시 등 여러 유형이 섞여 있습니다.</button>
+                <button class="option-btn multi-opt" onclick="setMulti(false, '단일 유형', this)">아니오, 주로 한 가지 유형에 집중되어 있습니다.</button>
+            </div>
+
+            <button id="btn-next2" class="btn-next" onclick="triggerLoading('사건의 맥락을 분석 중입니다...', 500, () => jumpToStage(3))">다음 단계로 (피해 진단)</button>
+        </div>
+
+        <div id="stage3" class="step-section">
+            
+            <div id="stage3-content">
+                <div class="question-title">3단계. 현재 겪고 계신 피해와 고통의 정도는 어떠신가요?</div>
+                <p style="font-size: 13px; color:#718096; margin-bottom:15px;">(해당하는 항목을 모두 선택해주세요)</p>
+                
+                <button class="option-btn st3-opt" onclick="togglePain('severe_medical', '병원 진료', this)">불면증, 우울증 등으로 병원 치료나 심리 상담을 받고 있습니다.</button>
+                <button class="option-btn st3-opt" onclick="togglePain('severe_quit', '이직 고려', this)">너무 고통스러워 진지하게 퇴사나 이직을 고민하고 있습니다.</button>
+                <button class="option-btn st3-opt" onclick="togglePain('moderate', '업무 지장', this)">스트레스로 인한 신체적 이상(두통 등)이 있거나 업무에 집중하기 어렵습니다.</button>
+                <button class="option-btn st3-opt" onclick="togglePain('mild', '일상 가능', this)">기분은 나쁘지만, 아직 참을 만하며 일상생활에 큰 지장은 없습니다.</button>
+
+                <button id="btn-submit" class="btn-submit" onclick="triggerLoading('NomuKing 알고리즘으로 최종 결과를 분석 중입니다...', 1000, calculateResult)">최종 결과 확인하기</button>
+            </div>
+
+            <div id="final-result" class="result-box" style="display:none;">
+                <h3 style="color:var(--primary); margin-top:0;">직장 내 괴롭힘 성립 확률</h3>
+                <div id="score" class="result-score">0%</div>
+                <p id="result-desc" style="font-size: 15px; color: #4A5568; line-height: 1.6; text-align: left;"></p>
+                
+                <div class="notice-box">
+                    <strong>💡 NomuKing 실무 가이드</strong><br>
+                    직장 내 괴롭힘은 각각의 개별 행위(사건)마다 성립 여부를 따로 판단해야 합니다. 다른 가해자나 다른 유형의 피해가 있다면 아래 버튼을 눌러 새롭게 진단해 보십시오.
+                </div>
+
+                <button class="btn-reset" onclick="resetTest()">🔄 처음으로 돌아가기 (새로 진단)</button>
+            </div>
+        </div>
+
+        <div class="copyright">
+            본 판독기의 진단 알고리즘은 관련 법령에 의해 보호받고 있습니다.<br>
+            <strong>Copyright © 2024 NomuKing. 무단 도용 및 복제 시 민형사상 책임을 묻습니다.</strong>
+        </div>
     </div>
 </div>
 
