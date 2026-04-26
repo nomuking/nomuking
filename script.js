@@ -3,7 +3,7 @@ document.addEventListener('contextmenu', event => event.preventDefault());
 let state = { 
     target: '', isPeerPowerful: null, 
     actionCategory: '', deepAnswers: [], frequency: '', isMulti: null, 
-    pain: [] // 3스테이지 복수 선택을 위한 배열
+    pain: [] 
 };
 
 let summaryText = { st1: '선택 대기 중', st2: '선택 대기 중', st3: '선택 대기 중' };
@@ -48,13 +48,19 @@ function triggerLoading(msg, duration, callback) {
 }
 
 function updateSidebarUI(activeStep) {
+    // 🚨 여기서 배열이 빠져서 오류가 났었습니다! 완벽히 수정했습니다.
    .forEach(step => {
         let el = document.getElementById('sb-st' + step);
-        el.classList.remove('active');
-        if (step <= highestStageReached) el.classList.remove('locked');
-        if (step === activeStep) el.classList.add('active');
+        if (el) {
+            el.classList.remove('active');
+            if (step <= highestStageReached) el.classList.remove('locked');
+            if (step === activeStep) el.classList.add('active');
+        }
         
-        document.getElementById('sb-val' + step).innerText = summaryText['st' + step];
+        let valEl = document.getElementById('sb-val' + step);
+        if (valEl) {
+            valEl.innerText = summaryText['st' + step];
+        }
     });
 }
 
@@ -79,7 +85,6 @@ function selectTarget(target, textValue, btn) {
     btn.classList.add('selected');
     state.target = target;
     summaryText.st1 = textValue;
-    updateSidebarUI(1);
     
     document.getElementById('peer-question').style.display = 'none';
     document.getElementById('external-alert').style.display = 'none';
@@ -95,6 +100,7 @@ function selectTarget(target, textValue, btn) {
     } else {
         highestStageReached = Math.max(highestStageReached, 2);
     }
+    updateSidebarUI(1);
 }
 
 function setPeerPower(isPowerful, textValue, btn) {
@@ -157,6 +163,7 @@ function setFrequency(freq, textValue, btn) {
     btn.classList.add('selected');
     state.frequency = freq;
     
+    // 빈도 선택 시 카테고리 텍스트와 조합
     summaryText.st2 = summaryText.st2.split(' / ') + ' / ' + textValue; 
     updateSidebarUI(2);
 
@@ -168,10 +175,11 @@ function setMulti(isMulti, textValue, btn) {
     btn.classList.add('selected');
     state.isMulti = isMulti;
     highestStageReached = Math.max(highestStageReached, 3);
+    updateSidebarUI(2);
     document.getElementById('btn-next2').style.display = 'block';
 }
 
-// --- STAGE 3 (복수 선택 로직) ---
+// --- STAGE 3 ---
 function togglePain(painValue, textValue, btn) {
     const index = state.pain.indexOf(painValue);
     
@@ -193,7 +201,7 @@ function togglePain(painValue, textValue, btn) {
     updateSidebarUI(3);
 }
 
-// --- 최종 결과 계산 (과락 로직 반영) ---
+// --- 결과 계산 ---
 function calculateResult() {
     document.getElementById('stage3-content').style.display = 'none';
     summaryText.st3 = "진단 완료";
@@ -203,12 +211,10 @@ function calculateResult() {
     let desc = "";
     let hasSuperiority = true; 
 
-    // [로직] 지위 우위성 체크
     if (['employer', 'superior', 'senior', 'group'].includes(state.target)) score += 20;
     else if (state.target === 'peer' && state.isPeerPowerful) score += 10;
     else if (state.target === 'peer' && !state.isPeerPowerful) hasSuperiority = false; 
 
-    // [로직] 심층 질문 수위 합산
     let deepSeverity = 0;
     state.deepAnswers.forEach(ans => {
         if(ans === 0) deepSeverity += 5;
@@ -219,7 +225,7 @@ function calculateResult() {
 
     if (score > 100) score = 100;
 
-    // 🚨 [과락 로직 적용]
+    // 과락 로직
     if (!hasSuperiority) {
         score = Math.min(score, 10);
     } 
@@ -230,7 +236,6 @@ function calculateResult() {
         score = Math.min(score, 45); 
     }
 
-    // 결과 텍스트 분기
     if (score <= 10) {
         desc = "<strong>근로기준법상 '직장 내 괴롭힘'으로 인정받을 확률이 극히 희박합니다. (10% 이하)</strong><br><br>";
         desc += "법적 요건의 1순위인 <strong>'지위 또는 관계의 우위'</strong>가 결여되어 있습니다. 동급자나 후배이면서 사내 입지가 강하지 않다면 노동청 진정 대상이 되지 않습니다.<br>다만, 행위 수위에 따라 형법상 모욕, 폭행 등의 별도 대응을 검토하십시오.";

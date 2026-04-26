@@ -70,14 +70,12 @@
             position: relative;
         }
 
-        /* 반응형: 모바일에서는 사이드바가 위로 올라가거나 가려지도록 처리 */
         @media (max-width: 768px) {
             .layout-wrapper { flex-direction: column; }
             .sidebar { width: 100%; position: static; padding: 15px; }
             .sb-item { margin-bottom: 10px; }
         }
 
-        /* ---------------- 기존 스타일 ---------------- */
         h1 { color: var(--primary); text-align: center; font-size: 24px; margin-bottom: 5px; }
         p.desc { text-align: center; color: #718096; font-size: 14px; margin-bottom: 30px; }
 
@@ -173,7 +171,7 @@
                 외부인에 의한 괴롭힘은 근로기준법이 아닌 '산업안전보건법' 대상입니다. 사측에 즉각적인 보호 조치를 강력히 요구할 수 있습니다.
             </div>
 
-            <button id="btn-next1" class="btn-next" onclick="triggerLoading('분석 중입니다...', 500, () => jumpToStage(2))">다음 단계로 (유형 진단)</button>
+            <button id="btn-next1" class="btn-next" onclick="triggerLoading('분석 중입니다...', 500, function(){ jumpToStage(2); })">다음 단계로 (유형 진단)</button>
         </div>
 
         <div id="stage2" class="step-section">
@@ -209,7 +207,7 @@
                 <button class="option-btn multi-opt" onclick="setMulti(false, '단일 유형', this)">아니오, 주로 한 가지 유형에 집중되어 있습니다.</button>
             </div>
 
-            <button id="btn-next2" class="btn-next" onclick="triggerLoading('사건의 맥락을 분석 중입니다...', 500, () => jumpToStage(3))">다음 단계로 (피해 진단)</button>
+            <button id="btn-next2" class="btn-next" onclick="triggerLoading('사건의 맥락을 분석 중입니다...', 500, function(){ jumpToStage(3); })">다음 단계로 (피해 진단)</button>
         </div>
 
         <div id="stage3" class="step-section">
