@@ -59,7 +59,7 @@ function updateSidebarUI(activeStep) {
 }
 
 function jumpToStage(step) {
-    if (step > highestStageReached) return; // 도달하지 않은 단계는 클릭 불가
+    if (step > highestStageReached) return; 
 
     document.querySelectorAll('.step-section').forEach(el => el.style.display = 'none');
     document.getElementById('stage' + step).style.display = 'block';
@@ -112,7 +112,7 @@ function startDeepDive(category, textValue, btn) {
     clearSelection(document.querySelectorAll('.st2-opt'));
     btn.classList.add('selected');
     state.actionCategory = category;
-    summaryText.st2 = textValue; // 기본 유형 저장
+    summaryText.st2 = textValue; 
     updateSidebarUI(2);
 
     state.deepAnswers = [];
@@ -157,7 +157,7 @@ function setFrequency(freq, textValue, btn) {
     btn.classList.add('selected');
     state.frequency = freq;
     
-    summaryText.st2 = summaryText.st2.split(' / ') + ' / ' + textValue; // 유형 + 빈도 텍스트 조합
+    summaryText.st2 = summaryText.st2.split(' / ') + ' / ' + textValue; 
     updateSidebarUI(2);
 
     document.getElementById('multi-question').style.display = 'block';
@@ -176,16 +176,13 @@ function togglePain(painValue, textValue, btn) {
     const index = state.pain.indexOf(painValue);
     
     if (index > -1) {
-        // 이미 있으면 배열에서 제거, CSS 해제
         state.pain.splice(index, 1);
         btn.classList.remove('selected');
     } else {
-        // 없으면 배열에 추가, CSS 적용
         state.pain.push(painValue);
         btn.classList.add('selected');
     }
 
-    // 선택 항목이 1개라도 있으면 제출 버튼 활성화
     if (state.pain.length > 0) {
         document.getElementById('btn-submit').style.display = 'block';
         summaryText.st3 = state.pain.length + "개 항목 선택";
@@ -198,21 +195,20 @@ function togglePain(painValue, textValue, btn) {
 
 // --- 최종 결과 계산 (과락 로직 반영) ---
 function calculateResult() {
-    // 결과 도출 시, 3단계 화면(질문들)을 완전히 숨김
     document.getElementById('stage3-content').style.display = 'none';
     summaryText.st3 = "진단 완료";
     updateSidebarUI(3);
 
-    let score = 50; // 기본 점수
+    let score = 50; 
     let desc = "";
     let hasSuperiority = true; 
 
     // [로직] 지위 우위성 체크
     if (['employer', 'superior', 'senior', 'group'].includes(state.target)) score += 20;
     else if (state.target === 'peer' && state.isPeerPowerful) score += 10;
-    else if (state.target === 'peer' && !state.isPeerPowerful) hasSuperiority = false; // 과락 1 대상
+    else if (state.target === 'peer' && !state.isPeerPowerful) hasSuperiority = false; 
 
-    // [로직] 심층 질문 수위 합산 (가중치 최소화)
+    // [로직] 심층 질문 수위 합산
     let deepSeverity = 0;
     state.deepAnswers.forEach(ans => {
         if(ans === 0) deepSeverity += 5;
@@ -221,24 +217,20 @@ function calculateResult() {
     score += deepSeverity;
     if (state.isMulti) score += 5;
 
-    // 점수 최대 한도
     if (score > 100) score = 100;
 
-    // 🚨 [과락 로직 적용: 10%, 30%, 50%]
-    // 1. 우위성 결여 (10% 이하로 확 떨어뜨림)
+    // 🚨 [과락 로직 적용]
     if (!hasSuperiority) {
         score = Math.min(score, 10);
     } 
-    // 2. 단발성 사건 (30% 이하로 확 떨어뜨림)
     else if (state.frequency === 'once') {
         score = Math.min(score, 30);
     } 
-    // 3. 고통이 '일상 가능(mild)' 1개만 단독으로 선택된 경우 (50% 이하로 확 떨어뜨림)
     else if (state.pain.length === 1 && state.pain === 'mild') {
-        score = Math.min(score, 45); // 50% 이하이므로 45를 최대치로 줌
+        score = Math.min(score, 45); 
     }
 
-    // 결과 텍스트 분기 (과락 사유 명시)
+    // 결과 텍스트 분기
     if (score <= 10) {
         desc = "<strong>근로기준법상 '직장 내 괴롭힘'으로 인정받을 확률이 극히 희박합니다. (10% 이하)</strong><br><br>";
         desc += "법적 요건의 1순위인 <strong>'지위 또는 관계의 우위'</strong>가 결여되어 있습니다. 동급자나 후배이면서 사내 입지가 강하지 않다면 노동청 진정 대상이 되지 않습니다.<br>다만, 행위 수위에 따라 형법상 모욕, 폭행 등의 별도 대응을 검토하십시오.";
