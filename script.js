@@ -48,7 +48,7 @@ function triggerLoading(msg, duration, callback) {
 }
 
 function updateSidebarUI(activeStep) {
-   .forEach(step => {
+    [1, 2, 3].forEach(step => {
         let el = document.getElementById('sb-st' + step);
         if (el) {
             el.classList.remove('active');
