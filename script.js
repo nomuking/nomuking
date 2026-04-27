@@ -230,8 +230,8 @@ function calculateResult() {
     else if (state.frequency === 'once') {
         score = Math.min(score, 30);
     } 
-    else if (state.pain.length === 1 && state.pain === 'mild') {
-        score = Math.min(score, 45); 
+    else if (state.pain.includes('mild')) {
+        score = Math.min(score, 45);
     }
 
     if (score <= 10) {
