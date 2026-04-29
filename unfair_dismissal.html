@@ -395,11 +395,19 @@ body>div.layout-wrapper{display:flex;max-width:960px;width:100%;gap:20px;align-i
         <button class="option-btn s4b-opt" onclick="sel('s4b',2,'충분히 있었음',this)">충분한 소명 기회가 있었음</button>
       </div>
 
-      <div class="q-label" id="q4c" style="display:none;">③ 징계위원회 절차가 진행되었나요? (징계해고의 경우)</div>
+      <!-- 4-C-1: 취업규칙 규정 유무 -->
+      <div class="q-label" id="q4c" style="display:none;">③ 취업규칙(또는 단체협약)에 징계위원회 관련 규정이 있나요?</div>
       <div id="opts4c" style="display:none;">
-        <button class="option-btn s4c-opt" onclick="sel('s4c',0,'미진행',this)">징계위원회가 열리지 않았음 (또는 해당 없음)</button>
-        <button class="option-btn s4c-opt" onclick="sel('s4c',1,'형식적 진행',this)">위원회는 열렸으나 형식적이었고 결과가 사전에 정해진 듯했음</button>
-        <button class="option-btn s4c-opt" onclick="sel('s4c',2,'정식 진행',this)">정식으로 진행되었음</button>
+        <button class="option-btn s4c-opt" onclick="sel('s4c',0,'규정 있음',this)">있음 — 취업규칙에 징계위원회 구성·절차가 명시되어 있음</button>
+        <button class="option-btn s4c-opt" onclick="sel('s4c',1,'규정 없음',this)">없음 또는 모름 — 규정을 확인하지 못했거나 없는 것으로 앎</button>
+      </div>
+
+      <!-- 4-C-2: 규정 있을 때만 표시 — 절차 이행 여부 -->
+      <div class="q-label" id="q4c2" style="display:none;">③-1. 그렇다면 해당 징계위원회 절차가 실제로 진행되었나요?</div>
+      <div id="opts4c2" style="display:none;">
+        <button class="option-btn s4c2-opt" onclick="sel('s4c2',0,'절차 미이행',this)">징계위원회가 열리지 않았음 (규정 있음에도 미진행)</button>
+        <button class="option-btn s4c2-opt" onclick="sel('s4c2',1,'형식적 진행',this)">위원회는 열렸으나 형식적이었고 결과가 사전에 정해진 듯했음</button>
+        <button class="option-btn s4c2-opt" onclick="sel('s4c2',2,'정식 진행',this)">정식으로 절차가 진행되었음</button>
       </div>
 
       <!-- 해고예고 (점수 무관, 별도 안내) -->
@@ -497,7 +505,7 @@ var S = {
   s2:-1,
   resignSigned:-1, resignLvl:-1,
   s3a:-1, s3b:-1, s3c1:-1, s3c2:-1, s3c3:-1,
-  s4a:-1, s4b:-1, s4c:-1, s4d:-1,
+  s4a:-1, s4b:-1, s4c:-1, s4c2:-1, s4d:-1,
   dismissed5:false, certainBan:false
 };
 var SB = { st1:'진행 중', st2:'대기 중', st3:'대기 중', st4:'대기 중' };
@@ -726,10 +734,18 @@ function onSelect(key, val, label){
     show('q4b'); show('opts4b');
   }
   if(key === 's4b'){
-    if(S.s2 === 0 || S.s2 === 1){ show('q4c'); show('opts4c'); }
-    else { showFinalBtn(); }
+    show('q4c'); show('opts4c');
   }
   if(key === 's4c'){
+    if(val === 0){
+      // 규정 있음 → 절차 이행 여부 질문
+      show('q4c2'); show('opts4c2');
+    } else {
+      // 규정 없음 → 징계위 불필요, 바로 예고수당 질문으로
+      showFinalBtn();
+    }
+  }
+  if(key === 's4c2'){
     showFinalBtn();
   }
   if(key === 's4d'){
@@ -796,14 +812,13 @@ function checkNext3(){
 ════════════════════════════════════════ */
 function calcResult(){
   var score = 40;
-  var breakdown = [];
-  var breakdown_minus = [];
+
 
   /* 3-A 사유 성격 */
   var s3a_bonus = [0, 0, 0, 0, 15, 25]; // 마지막 두 개 (능력, 불명확)
   if(S.s3a >= 0){
     var add = s3a_bonus[S.s3a];
-    if(add > 0){ score += add; breakdown.push({l:'해고사유 입증 부담 ('+['범죄확정','범죄혐의','민사위반','규정위반','능력태도','사유불명확'][S.s3a]+')',v:'+'+add}); }
+    if(add > 0){ score += add',v:'+'+add}); }
   }
 
   /* 3-B 행위 카테고리 */
@@ -811,20 +826,18 @@ function calcResult(){
     var bScore = B_DATA[S.s3a].opts[S.s3b].score;
     score += bScore;
     var bLabel = B_DATA[S.s3a].opts[S.s3b].t.substring(0, 20) + '...';
-    if(bScore > 0) breakdown.push({l:'행위 유형 가산', v:'+'+bScore});
-    else if(bScore < 0) breakdown_minus.push({l:'행위 유형 감산 (사유 인정 가능성↑)', v:''+bScore});
   }
 
   /* 3-C1 형평성 */
-  if(S.s3c1 === 0){ score += 20; breakdown.push({l:'형평성 위반 (나만 해고)', v:'+20'}); }
+  if(S.s3c1 === 0){ score += 20', v:'+20'}); }
 
   /* 3-C2 전력 */
-  if(S.s3c2 === 0){ score += 15; breakdown.push({l:'징계 전력 없음 (초범)', v:'+15'}); }
-  else if(S.s3c2 === 2){ score -= 10; breakdown_minus.push({l:'반복 징계 이력', v:'-10'}); }
+  if(S.s3c2 === 0){ score += 15', v:'+15'}); }
+  else if(S.s3c2 === 2){ score -= 10; }
 
   /* 3-C3 사전 경고 */
-  if(S.s3c3 === 0){ score += 10; breakdown.push({l:'사전 경고 전혀 없이 해고', v:'+10'}); }
-  else if(S.s3c3 === 1){ score += 5; breakdown.push({l:'구두 경고만 있었음', v:'+5'}); }
+  if(S.s3c3 === 0){ score += 10; }
+  else if(S.s3c3 === 1){ score += 5; }
 
   /* 해고 유형별 보정 */
   if(S.s2 === 1){
@@ -845,17 +858,17 @@ function calcResult(){
   if(S.s2 === 4){ score += 8; }  // 당연퇴직
 
   /* 4-A 서면 통보 */
-  if(S.s4a === 0){ score += 20; breakdown.push({l:'서면 통보 없음 (근기법 §27 위반)', v:'+20'}); }
-  else if(S.s4a === 1){ score += 10; breakdown.push({l:'카톡·문자 통보 (서면 논란 가능)', v:'+10'}); }
+  if(S.s4a === 0){ score += 20', v:'+20'}); }
+  else if(S.s4a === 1){ score += 10', v:'+10'}); }
 
   /* 4-B 소명 기회 */
-  if(S.s4b === 0){ score += 15; breakdown.push({l:'소명 기회 전혀 없음', v:'+15'}); }
-  else if(S.s4b === 1){ score += 8; breakdown.push({l:'소명 기회 형식적', v:'+8'}); }
+  if(S.s4b === 0){ score += 15; }
+  else if(S.s4b === 1){ score += 8; }
 
-  /* 4-C 징계위원회 (징계해고만) */
-  if((S.s2 === 0 || S.s2 === 1) && S.s4c >= 0){
-    if(S.s4c === 0){ score += 10; breakdown.push({l:'징계위원회 미진행', v:'+10'}); }
-    else if(S.s4c === 1){ score += 5; breakdown.push({l:'징계위원회 형식적 진행', v:'+5'}); }
+  /* 4-C 징계위원회: 규정 있는 경우에만 절차 위반 점수 부여 */
+  if(S.s4c === 0 && S.s4c2 >= 0){
+    if(S.s4c2 === 0){ score += 15; }   // 규정 있음 + 미진행
+    else if(S.s4c2 === 1){ score += 8; } // 규정 있음 + 형식적
   }
 
   /* 수습 상한 */
@@ -877,12 +890,7 @@ function calcResult(){
   };
   document.getElementById('r-hero-sub').innerText = (S.s2 >= 0 ? subTexts[S.s2] : '') + ' | ' + (S.s1b >= 0 ? ['정규직','기간제','수습','일용직'][S.s1b] : '');
 
-  /* 점수 내역 */
-  var bdHtml = '<div class="r-row"><span class="lbl">기본 점수</span><span class="val">40점</span></div>';
-  breakdown.forEach(function(r){ bdHtml += '<div class="r-row"><span class="lbl">'+r.l+'</span><span class="val plus">'+r.v+'</span></div>'; });
-  breakdown_minus.forEach(function(r){ bdHtml += '<div class="r-row"><span class="lbl">'+r.l+'</span><span class="val minus">'+r.v+'</span></div>'; });
-  bdHtml += '<div class="r-row" style="margin-top:4px;"><span class="lbl" style="font-weight:700;color:var(--text);">최종 점수</span><span class="val" style="font-size:16px;">'+Math.round(score)+'점</span></div>';
-  document.getElementById('r-score-breakdown').innerHTML = bdHtml;
+  /* 점수 내역 표시 제거됨 — 결과는 종합 의견만 표시 */
 
   /* 종합 의견 */
   var opinion = '';
@@ -944,7 +952,7 @@ function showResult(type){
    리셋
 ════════════════════════════════════════ */
 function resetAll(){
-  S = {s1a:-1,s1b:-1,s1c:-1,s2:-1,resignSigned:-1,resignLvl:-1,s3a:-1,s3b:-1,s3c1:-1,s3c2:-1,s3c3:-1,s4a:-1,s4b:-1,s4c:-1,s4d:-1,dismissed5:false,certainBan:false};
+  S = {s1a:-1,s1b:-1,s1c:-1,s2:-1,resignSigned:-1,resignLvl:-1,s3a:-1,s3b:-1,s3c1:-1,s3c2:-1,s3c3:-1,s4a:-1,s4b:-1,s4c:-1,s4c2:-1,s4d:-1,dismissed5:false,certainBan:false};
   SB = {st1:'진행 중',st2:'대기 중',st3:'대기 중',st4:'대기 중'};
   highestStage = 1;
   document.querySelectorAll('.option-btn').forEach(function(b){b.classList.remove('selected');});
@@ -952,7 +960,7 @@ function resetAll(){
   // 숨김 처리
   ['alert-five','btn-next1','q1b','opts1b','q1c','opts1c','s2-resign-wrap','resign-detail',
    'btn-next2','s3b-wrap','s3c-wrap','q3c2','opts3c2','q3c3','opts3c3','btn-next3',
-   'q4b','opts4b','q4c','opts4c','q4d-wrap','btn-submit',
+   'q4b','opts4b','q4c','opts4c','q4c2','opts4c2','q4d-wrap','btn-submit',
    'result-certain','result-five','result-normal','r-urgent','r-money',
    'btn-consult-n'].forEach(function(id){ hide(id); });
 
