@@ -289,7 +289,7 @@ body>div.layout-wrapper{display:flex;max-width:960px;width:100%;gap:20px;align-i
       <div class="q-sub">가장 실질에 가까운 유형을 선택해 주세요.</div>
 
       <button class="option-btn s2-opt" onclick="sel('s2',0,'징계해고',this)">📋 징계해고 — 취업규칙 위반, 비위행위 등을 사유로 일방 해고 통보</button>
-      <button class="option-btn s2-opt" onclick="sel('s2',1,'권고사직 강요',this)">🤝 권고사직 강요 — 사직서 제출을 압박받거나 강요받았음</button>
+      <button class="option-btn s2-opt" onclick="sel('s2',1,'권고사직 강요',this)">🤝 권고사직 — 회사로부터 사직을 권유받은 상황</button>
       <button class="option-btn s2-opt" onclick="sel('s2',2,'정리해고',this)">📉 정리해고 — 경영악화·구조조정을 이유로 해고</button>
       <button class="option-btn s2-opt" onclick="sel('s2',3,'계약만료 미갱신',this)">📄 계약만료 미갱신 — 기간제 계약 종료 후 갱신 거절</button>
       <button class="option-btn s2-opt" onclick="sel('s2',4,'당연퇴직 통보',this)">🚪 당연퇴직 통보 — 특정 사유 발생을 이유로 자동 퇴직 처리</button>
@@ -320,6 +320,32 @@ body>div.layout-wrapper{display:flex;max-width:960px;width:100%;gap:20px;align-i
         <div class="depth-chip">STEP B — 행위의 구체적 내용</div>
         <div id="s3b-question" class="q-sub"></div>
         <div id="s3b-options"></div>
+      </div>
+
+
+      <!-- 권고사직 전용: 서명 여부 + 강요 수위 -->
+      <div id="s2-resign-wrap" style="display:none;margin-top:20px;padding-top:18px;border-top:1px dashed #CBD5E0;">
+        <div class="depth-chip">권고사직 핵심 확인</div>
+        <div class="q-sub">권고사직의 법적 핵심은 <strong>근로자의 진정한 의사에 의한 합의</strong>입니다.<br>사직서에 서명하셨나요?</div>
+
+        <div class="q-label">① 사직서 제출 여부</div>
+        <button class="option-btn resign-sign-opt" onclick="selResign(0,this)">✅ 사직서에 서명하여 제출하였음</button>
+        <button class="option-btn resign-sign-opt" onclick="selResign(1,this)">🚫 사직서 제출을 거부하거나 아직 제출하지 않았음</button>
+
+        <div id="resign-detail" style="display:none;margin-top:14px;">
+          <div class="alert-box alert-yellow" style="display:block;margin-bottom:14px;">
+            <strong>⚠️ 중요 법률 안내</strong><br>
+            권고사직에 <strong>동의하여 사직서를 제출한 경우</strong>, 판례상 부당해고로 구제받기가 극히 어렵습니다.<br>
+            합의 해지의 의사표시가 있으면 원칙적으로 근로계약은 종료됩니다.<br>
+            예외적으로 인정되는 경우는 <strong>① 강박으로 인한 의사표시</strong>(민법 제110조) 또는 <strong>② 사직 의사 즉시 철회</strong>에 한하며, 법원·노동위원회의 기준은 매우 엄격합니다.
+          </div>
+
+          <div class="q-label">② 사직서 제출 당시 상황은 어떠했나요?</div>
+          <button class="option-btn resign-lvl-opt" onclick="selResignLvl(0,this)">분위기상 거절하기 어려웠고, 권유를 받아 서명함</button>
+          <button class="option-btn resign-lvl-opt" onclick="selResignLvl(1,this)">인사 불이익(부서 이동·고과 불이익 등)을 암시하며 압박하였음</button>
+          <button class="option-btn resign-lvl-opt" onclick="selResignLvl(2,this)">명시적으로 "거부하면 해고·징계한다"고 위협하였음 (증거 있음)</button>
+          <button class="option-btn resign-lvl-opt" onclick="selResignLvl(3,this)">사직서 제출 즉시 또는 당일 내로 철회 의사를 명확히 밝혔음</button>
+        </div>
       </div>
 
       <!-- 3-C 양정 적절성 -->
@@ -439,12 +465,6 @@ body>div.layout-wrapper{display:flex;max-width:960px;width:100%;gap:20px;align-i
 
         <div class="notice-urgent" id="r-urgent" style="display:none;"></div>
         <div class="notice-money" id="r-money"></div>
-
-        <div class="result-card">
-          <h3>📊 점수 산정 내역</h3>
-          <div id="r-score-breakdown"></div>
-        </div>
-
         <div class="result-card">
           <h3>💡 종합 의견 및 대응 전략</h3>
           <div id="r-opinion"></div>
@@ -475,6 +495,7 @@ body>div.layout-wrapper{display:flex;max-width:960px;width:100%;gap:20px;align-i
 var S = {
   s1a:-1, s1b:-1, s1c:-1,
   s2:-1,
+  resignSigned:-1, resignLvl:-1,
   s3a:-1, s3b:-1, s3c1:-1, s3c2:-1, s3c3:-1,
   s4a:-1, s4b:-1, s4c:-1, s4d:-1,
   dismissed5:false, certainBan:false
@@ -551,13 +572,13 @@ var B_DATA = {
 /* 절차위반 안내문 */
 var PROC_MSG = {
   징계해고:'징계해고의 경우 ① 해고 사유·시기 서면 통보, ② 소명 기회 부여, ③ 취업규칙에 따른 징계위원회 절차가 모두 필요합니다.',
-  권고사직강요:'권고사직 강요의 경우에도 실질적으로 해고에 해당하면 동일한 절차 요건이 적용됩니다.',
+  권고사직:'권고사직에 동의(사직서 제출)한 경우 원칙적으로 합의 해지에 해당하여 부당해고 구제신청이 인정되기 매우 어렵습니다. 예외적으로 ① 강박에 의한 의사표시(민법 제110조) 또는 ② 즉시 철회 의사 표시의 경우에만 다툼의 여지가 있습니다.',
   정리해고:'정리해고는 ① 긴박한 경영 필요, ② 해고 회피 노력, ③ 합리적 기준에 의한 선정, ④ 노조·근로자 대표와 50일 전 협의의 4대 요건이 모두 충족되어야 합니다.',
   계약만료미갱신:'계약 만료의 경우 갱신 기대권이 있는지 여부가 핵심입니다. 반복 갱신 횟수·사용자의 갱신 약속 언동이 중요합니다.',
   당연퇴직통보:'당연퇴직 조항이 취업규칙에 명시되어 있지 않거나 적법하지 않은 경우 부당해고에 해당할 수 있습니다.'
 };
 
-var dismissalTypeLabel = ['징계해고','권고사직강요','정리해고','계약만료미갱신','당연퇴직통보'];
+var dismissalTypeLabel = ['징계해고','권고사직','정리해고','계약만료미갱신','당연퇴직통보'];
 
 /* ════════════════════════════════════════
    공통 유틸
@@ -668,6 +689,10 @@ function onSelect(key, val, label){
     show('btn-next2');
     updateSidebar(2);
   }
+  /* Stage 2→3 전환 시 권고사직이면 resign 섹션 먼저 보여주기 */
+  if(key === 's3a' && S.s2 === 1){
+    show('s2-resign-wrap');
+  }
 
   /* Stage 3-A */
   if(key === 's3a'){
@@ -692,7 +717,7 @@ function onSelect(key, val, label){
   }
   if(key === 's3c3'){
     highestStage = Math.max(highestStage, 4);
-    show('btn-next3');
+    checkNext3();
     updateSidebar(3);
   }
 
@@ -732,6 +757,40 @@ function render3B(typeIdx){
   show('s3b-wrap');
 }
 
+
+/* ── 권고사직 전용 함수 ── */
+function selResign(val, btn){
+  document.querySelectorAll('.resign-sign-opt').forEach(function(b){b.classList.remove('selected');});
+  btn.classList.add('selected');
+  S.resignSigned = val;
+  S.resignLvl = -1;
+  document.querySelectorAll('.resign-lvl-opt').forEach(function(b){b.classList.remove('selected');});
+  if(val === 0){
+    document.getElementById('resign-detail').style.display = 'block';
+    document.getElementById('btn-next3').style.display = 'none';
+  } else {
+    document.getElementById('resign-detail').style.display = 'none';
+    // 서명 안 함 → 3-C로 바로 진행
+    document.getElementById('s3c-wrap').style.display = 'block';
+    checkNext3();
+  }
+}
+
+function selResignLvl(val, btn){
+  document.querySelectorAll('.resign-lvl-opt').forEach(function(b){b.classList.remove('selected');});
+  btn.classList.add('selected');
+  S.resignLvl = val;
+  // 서명+강요수위 선택 완료 → 3-C 표시
+  document.getElementById('s3c-wrap').style.display = 'block';
+  checkNext3();
+}
+
+function checkNext3(){
+  if(S.s3c3 >= 0){
+    document.getElementById('btn-next3').style.display = 'block';
+  }
+}
+
 /* ════════════════════════════════════════
    결과 계산
 ════════════════════════════════════════ */
@@ -768,9 +827,22 @@ function calcResult(){
   else if(S.s3c3 === 1){ score += 5; breakdown.push({l:'구두 경고만 있었음', v:'+5'}); }
 
   /* 해고 유형별 보정 */
-  if(S.s2 === 1){ score += 10; breakdown.push({l:'권고사직 강요 의심', v:'+10'}); } // 권고사직
-  if(S.s2 === 2){ score += 8;  breakdown.push({l:'정리해고 — 4대 요건 검토 필요', v:'+8'}); }
-  if(S.s2 === 4){ score += 8;  breakdown.push({l:'당연퇴직 — 취업규칙 근거 불명확', v:'+8'}); }
+  if(S.s2 === 1){
+    // 권고사직: 서명 여부·강요 수위에 따라 엄격 처리
+    if(S.resignSigned === 0){
+      // 서명함 → 강요 수위별 상한 적용
+      var lvl = S.resignLvl;
+      if(lvl === 0){ score = Math.min(score, 15); }       // 분위기 압박만 → 거의 불인정
+      else if(lvl === 1){ score = Math.min(score, 25); }  // 불이익 암시 → 매우 어려움
+      else if(lvl === 2){ score = Math.min(score, 45); }  // 명시적 위협(증거 있음) → 다툼 가능
+      else if(lvl === 3){ score = Math.min(score, 55); }  // 즉시 철회 의사 → 그나마 가능성
+    } else if(S.resignSigned === 1){
+      // 서명 거부 → 사실상 해고에 해당, 일반 가산
+      score += 15;
+    }
+  }
+  if(S.s2 === 2){ score += 8; }  // 정리해고
+  if(S.s2 === 4){ score += 8; }  // 당연퇴직
 
   /* 4-A 서면 통보 */
   if(S.s4a === 0){ score += 20; breakdown.push({l:'서면 통보 없음 (근기법 §27 위반)', v:'+20'}); }
@@ -814,7 +886,7 @@ function calcResult(){
 
   /* 종합 의견 */
   var opinion = '';
-  var procKey = S.s2 >= 0 ? ['징계해고','권고사직강요','정리해고','계약만료미갱신','당연퇴직통보'][S.s2] : '';
+  var procKey = S.s2 >= 0 ? ['징계해고','권고사직','정리해고','계약만료미갱신','당연퇴직통보'][S.s2] : '';
 
   if(score >= 80){
     opinion = '<p><strong>부당해고에 해당할 가능성이 매우 높습니다.</strong></p>';
@@ -872,13 +944,13 @@ function showResult(type){
    리셋
 ════════════════════════════════════════ */
 function resetAll(){
-  S = {s1a:-1,s1b:-1,s1c:-1,s2:-1,s3a:-1,s3b:-1,s3c1:-1,s3c2:-1,s3c3:-1,s4a:-1,s4b:-1,s4c:-1,s4d:-1,dismissed5:false,certainBan:false};
+  S = {s1a:-1,s1b:-1,s1c:-1,s2:-1,resignSigned:-1,resignLvl:-1,s3a:-1,s3b:-1,s3c1:-1,s3c2:-1,s3c3:-1,s4a:-1,s4b:-1,s4c:-1,s4d:-1,dismissed5:false,certainBan:false};
   SB = {st1:'진행 중',st2:'대기 중',st3:'대기 중',st4:'대기 중'};
   highestStage = 1;
   document.querySelectorAll('.option-btn').forEach(function(b){b.classList.remove('selected');});
 
   // 숨김 처리
-  ['alert-five','btn-next1','q1b','opts1b','q1c','opts1c',
+  ['alert-five','btn-next1','q1b','opts1b','q1c','opts1c','s2-resign-wrap','resign-detail',
    'btn-next2','s3b-wrap','s3c-wrap','q3c2','opts3c2','q3c3','opts3c3','btn-next3',
    'q4b','opts4b','q4c','opts4c','q4d-wrap','btn-submit',
    'result-certain','result-five','result-normal','r-urgent','r-money',
