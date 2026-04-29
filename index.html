@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>워크닥터(WorkDoctor) | 대한민국 1등 직장인 권리보호 플랫폼</title>
+    <title>노무킹(NomuKing) | 대한민국 1등 직장인 권리보호 플랫폼</title>
     <style>
         /* [모던 UI/UX 기본 설정] */
         :root {
@@ -145,8 +145,16 @@
         });
     </script>
 
-    <header>
-        <h1>WorkDoctor</h1>
+    <!-- 글로벌 네비게이션 -->
+    <nav style="background:#1A365D; padding:0 20px; display:flex; align-items:center; justify-content:space-between; height:54px; position:sticky; top:0; z-index:200; box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+      <a href="index.html" style="color:white; text-decoration:none; font-weight:800; font-size:18px; letter-spacing:0.5px;">NomuKing</a>
+      <div style="display:flex; gap:4px; align-items:center;">
+        <a href="index.html" style="color:white; text-decoration:none; font-size:13px; padding:6px 13px; border-radius:6px; background:rgba(255,255,255,0.15); font-weight:600;">홈</a>
+        <a href="harassment.html" style="color:rgba(255,255,255,0.85); text-decoration:none; font-size:13px; padding:6px 13px; border-radius:6px; transition:0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">괴롭힘 진단</a>
+        <a href="board.html" style="color:rgba(255,255,255,0.85); text-decoration:none; font-size:13px; padding:6px 13px; border-radius:6px; transition:0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">커뮤니티 게시판</a>
+      </div>
+    </nav>
+        <h1>NomuKing</h1>
         <p>노무사가 만든 직장인 권리보호 플랫폼</p>
     </header>
 
@@ -186,9 +194,9 @@
             <div class="card-desc">질문에 답만 하면, 노동청 진정서와 내용증명 문서가 법적 효력을 갖춘 PDF로 자동 생성됩니다.</div>
         </a>
 
-        <a href="#" class="card" onclick="alert('현재 개발 중인 기능입니다. 곧 오픈됩니다!'); return false;">
+        <a href="board.html" class="card">
             <div class="card-icon">🗣️</div>
-            <div class="card-title">익명 대나무숲 게시판 <span class="badge badge-soon">UPCOMING</span></div>
+            <div class="card-title">익명 대나무숲 게시판 <span class="badge">NEW</span></div>
             <div class="card-desc">임금체불, 진상 상사 고발! 철저한 익명이 보장되는 직장인 사이다 커뮤니티. 노무사가 직접 답글을 달아드립니다.</div>
         </a>
     </div>
@@ -200,9 +208,9 @@
     </div>
 
     <footer>
-        <p><strong>WorkDoctor</strong> | 노동법률센터</p>
+        <p><strong>NomuKing</strong> | 노동법률센터</p>
         <p style="margin-top: 10px;">본 사이트의 진단 로직 및 콘텐츠를 무단 크롤링하거나 상업적으로 이용할 경우 관련 법령에 의해 민형사상 책임을 질 수 있습니다.</p>
-        <p style="margin-top: 10px;">Copyright © 2024 워크닥터. All rights reserved.</p>
+        <p style="margin-top: 10px;">Copyright © 2024 노무킹. All rights reserved.</p>
     </footer>
 
 </body>

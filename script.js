@@ -252,9 +252,13 @@ function calculateResult() {
         desc += "다만, 회사 측에서 '정당한 업무 지시였다'고 방어할 논리가 존재하므로, 해당 행위의 부당함을 입증할 구체적인 기록(일지, 메신저 등) 보완이 필수적입니다.";
     }
 
-    document.getElementById('score').innerText = Math.round(score) + "%";
+    const scoreEl = document.getElementById('score');
+    scoreEl.innerText = Math.round(score) + "%";
+    scoreEl.style.color = score >= 50 ? '#E53E3E' : '#2F855A';
     document.getElementById('result-desc').innerHTML = desc;
     document.getElementById('final-result').style.display = 'block';
+    const consultBtn = document.getElementById('btn-consult');
+    if (consultBtn) consultBtn.style.display = 'block';
 }
 
 function resetTest() {
