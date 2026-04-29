@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>부당해고 판독기 | NomuKing(노무킹)</title>
+<meta name="description" content="부당해고 여부를 노무사 판단 로직으로 진단합니다. 해고사유·절차·양정을 단계별로 분석합니다.">
+<style>
+:root {
+  --primary:#1A365D; --secondary:#3182CE; --bg:#F7FAFC;
+  --text:#2D3748; --sub:#718096; --border:#E2E8F0;
+  --red:#E53E3E; --green:#2F855A; --orange:#C05621;
+  --radius:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);color:var(--text);-webkit-user-select:none;user-select:none;}
+
+/* ── 네비게이션 ── */
+nav{background:var(--primary);padding:0 20px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,0.2);}
+.nav-logo{color:white;text-decoration:none;font-weight:800;font-size:18px;}
+.nav-links{display:flex;gap:4px;flex-wrap:wrap;}
+.nav-links a{color:rgba(255,255,255,0.85);text-decoration:none;font-size:13px;padding:6px 13px;border-radius:6px;transition:0.2s;}
+.nav-links a:hover{background:rgba(255,255,255,0.1);}
+.nav-links a.active{background:rgba(255,255,255,0.15);color:white;font-weight:600;}
+
+/* ── 레이아웃 ── */
+body>div.layout-wrapper{display:flex;max-width:960px;width:100%;gap:20px;align-items:flex-start;margin:0 auto;padding:24px 16px 60px;}
+
+/* ── 사이드바 ── */
+.sidebar{background:white;width:270px;padding:22px;border-radius:var(--radius);box-shadow:0 4px 20px rgba(0,0,0,0.06);position:sticky;top:74px;flex-shrink:0;border:1px solid var(--border);}
+.sb-header{font-size:15px;font-weight:800;color:var(--primary);margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #EDF2F7;}
+.sb-item{margin-bottom:10px;padding:11px 14px;border-radius:8px;background:#F7FAFC;cursor:pointer;transition:0.2s;border:1px solid transparent;}
+.sb-item:hover{border-color:var(--secondary);background:white;}
+.sb-item.active{border-color:var(--secondary);background:#EBF8FF;}
+.sb-item.locked{opacity:0.4;cursor:not-allowed;pointer-events:none;}
+.sb-title{font-size:12px;font-weight:700;color:var(--primary);margin-bottom:3px;}
+.sb-val{font-size:12px;color:var(--sub);line-height:1.4;word-break:keep-all;}
+
+/* ── 메인 컨테이너 ── */
+.container{background:white;flex:1;padding:30px 28px;border-radius:var(--radius);box-shadow:0 4px 20px rgba(0,0,0,0.06);position:relative;border:1px solid var(--border);min-width:0;}
+
+/* ── 타이틀 ── */
+.page-title{color:var(--primary);text-align:center;font-size:23px;font-weight:800;margin-bottom:5px;}
+.page-desc{text-align:center;color:var(--sub);font-size:14px;margin-bottom:28px;line-height:1.5;}
+
+/* ── 스텝 섹션 ── */
+.step-section{display:none;animation:fadeIn 0.35s;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── 질문 타이틀 ── */
+.q-title{font-weight:800;font-size:18px;margin-bottom:6px;color:var(--primary);line-height:1.4;}
+.q-sub{font-size:13px;color:var(--sub);margin-bottom:16px;line-height:1.5;}
+.q-label{font-weight:700;font-size:14px;color:var(--text);margin:18px 0 8px;}
+.depth-chip{display:inline-block;background:#EBF8FF;color:var(--secondary);font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;margin-bottom:8px;}
+
+/* ── 옵션 버튼 ── */
+.option-btn{display:block;width:100%;padding:14px 16px;margin-bottom:9px;background:#EDF2F7;border:2px solid transparent;border-radius:9px;font-size:14px;text-align:left;cursor:pointer;transition:all 0.18s;color:#4A5568;line-height:1.45;font-family:inherit;}
+.option-btn:hover{background:#E2E8F0;}
+.option-btn.selected{background:#EBF8FF;border-color:var(--secondary);color:var(--secondary);font-weight:700;}
+.option-btn.danger{border-left:4px solid var(--red);}
+.option-btn.danger:hover{background:#FFF5F5;}
+
+/* ── 알림 박스 ── */
+.alert-box{padding:14px 16px;border-radius:8px;font-size:13px;line-height:1.6;margin-top:10px;display:none;}
+.alert-red{background:#FFF5F5;border-left:4px solid var(--red);color:#742A2A;}
+.alert-blue{background:#EBF8FF;border-left:4px solid var(--secondary);color:#1A365D;}
+.alert-yellow{background:#FFFFF0;border-left:4px solid #D69E2E;color:#744210;}
+
+/* ── 다음 버튼 ── */
+.btn-next,.btn-submit{width:100%;color:white;border:none;padding:15px;font-size:16px;font-weight:700;border-radius:9px;cursor:pointer;margin-top:18px;transition:0.25s;font-family:inherit;display:none;}
+.btn-next,.btn-submit{background:var(--primary);}
+.btn-next:hover,.btn-submit:hover{background:#2A4365;}
+
+/* ── 결과 ── */
+.result-wrap{display:none;animation:fadeIn 0.4s;}
+.result-hero{text-align:center;padding:28px 20px;border-radius:12px;margin-bottom:20px;}
+.result-hero.high{background:linear-gradient(135deg,#742A2A,#C53030);}
+.result-hero.mid{background:linear-gradient(135deg,#7B341E,#C05621);}
+.result-hero.low{background:linear-gradient(135deg,#1A365D,#2B6CB0);}
+.result-hero.certain{background:linear-gradient(135deg,#1C1C1C,#C53030);}
+.result-hero .r-label{color:rgba(255,255,255,0.8);font-size:14px;margin-bottom:8px;}
+.result-hero .r-score{font-size:52px;font-weight:900;color:white;letter-spacing:-1px;line-height:1;}
+.result-hero .r-sub{color:rgba(255,255,255,0.75);font-size:13px;margin-top:10px;}
+
+.result-card{background:white;border:1px solid var(--border);border-radius:10px;padding:20px 22px;margin-bottom:14px;}
+.result-card h3{font-size:15px;font-weight:800;color:var(--primary);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.result-card p{font-size:14px;color:#4A5568;line-height:1.75;}
+.result-card p+p{margin-top:8px;}
+
+.r-row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;font-size:13px;border-bottom:1px solid #F0F4F8;}
+.r-row:last-child{border-bottom:none;}
+.r-row .lbl{color:var(--sub);flex:1;}
+.r-row .val{font-weight:700;color:var(--text);text-align:right;margin-left:10px;}
+.r-row .val.plus{color:var(--red);}
+.r-row .val.minus{color:var(--green);}
+
+.notice-urgent{background:#FFF5F5;border:1px solid #FEB2B2;border-radius:8px;padding:14px 16px;font-size:13px;color:#742A2A;line-height:1.7;margin-bottom:14px;}
+.notice-urgent strong{color:var(--red);}
+.notice-info{background:#EBF8FF;border:1px solid #BEE3F8;border-radius:8px;padding:14px 16px;font-size:13px;color:#1A365D;line-height:1.7;margin-bottom:14px;}
+.notice-info strong{color:var(--secondary);}
+.notice-money{background:#F0FFF4;border:1px solid #9AE6B4;border-radius:8px;padding:14px 16px;font-size:13px;color:#1C4532;line-height:1.7;margin-bottom:14px;display:none;}
+.notice-money strong{color:var(--green);}
+.notice-five{background:#FFFFF0;border:1px solid #F6E05E;border-radius:8px;padding:14px 16px;font-size:13px;color:#744210;line-height:1.7;margin-bottom:14px;display:none;}
+
+.btn-reset{width:100%;background:#718096;color:white;border:none;padding:14px;font-size:15px;font-weight:700;border-radius:9px;cursor:pointer;margin-top:6px;font-family:inherit;transition:0.2s;}
+.btn-reset:hover{background:#4A5568;}
+
+/* ── 상담 버튼 ── */
+.btn-consult{width:100%;background:var(--green);color:white;border:none;padding:14px;font-size:15px;font-weight:700;border-radius:9px;cursor:pointer;margin-top:10px;font-family:inherit;transition:0.2s;display:none;}
+.btn-consult:hover{background:#276749;}
+
+/* ── 상담 모달 ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:500;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:white;border-radius:14px;padding:30px 26px;width:100%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,0.2);}
+.modal-box h3{font-size:19px;font-weight:800;color:var(--primary);margin-bottom:5px;}
+.modal-sub{font-size:13px;color:var(--sub);margin-bottom:20px;line-height:1.5;}
+.mf{margin-bottom:13px;}
+.mf label{display:block;font-size:13px;font-weight:600;color:#4A5568;margin-bottom:5px;}
+.mf input,.mf textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:14px;font-family:inherit;resize:vertical;}
+.mf input:focus,.mf textarea:focus{outline:none;border-color:var(--secondary);}
+.mf textarea{min-height:90px;}
+.modal-actions{display:flex;gap:10px;margin-top:18px;}
+.btn-ms{flex:1;background:var(--primary);color:white;border:none;padding:12px;font-size:15px;font-weight:700;border-radius:8px;cursor:pointer;font-family:inherit;}
+.btn-mc{padding:12px 16px;background:#EDF2F7;color:var(--sub);border:1px solid var(--border);border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;}
+.form-success{text-align:center;padding:20px 0;display:none;}
+.form-success .ck{font-size:44px;margin-bottom:10px;}
+.form-success p{color:var(--green);font-weight:700;font-size:15px;}
+
+/* ── 로딩 ── */
+.loading-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.93);display:none;flex-direction:column;justify-content:center;align-items:center;border-radius:var(--radius);z-index:100;}
+.spinner{border:4px solid #EDF2F7;border-top:4px solid var(--secondary);border-radius:50%;width:38px;height:38px;animation:spin 0.9s linear infinite;margin-bottom:14px;}
+@keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+.loading-text{font-weight:700;color:var(--primary);font-size:15px;}
+
+.copyright{font-size:11px;color:#A0AEC0;text-align:center;margin-top:36px;border-top:1px solid #E2E8F0;padding-top:14px;}
+
+@media(max-width:760px){
+  body>div.layout-wrapper{flex-direction:column;padding:16px 12px 40px;}
+  .sidebar{width:100%;position:static;padding:14px;}
+  .sb-item{display:inline-block;width:auto;padding:7px 12px;margin-right:6px;margin-bottom:6px;}
+  .container{padding:20px 16px;}
+  .page-title{font-size:19px;}
+}
+</style>
+</head>
+<body>
+
+<script>
+(function(){
+  document.addEventListener('contextmenu',function(e){e.preventDefault();});
+  document.addEventListener('selectstart',function(e){e.preventDefault();});
+  document.addEventListener('dragstart',function(e){e.preventDefault();});
+  document.addEventListener('keydown',function(e){
+    var k=e.keyCode;
+    if(k===123){e.preventDefault();return false;}
+    if(e.ctrlKey&&e.shiftKey&&(k===73||k===74||k===67)){e.preventDefault();return false;}
+    if(e.ctrlKey&&(k===85||k===83||k===80||k===65)){e.preventDefault();return false;}
+  });
+  window.addEventListener('beforeprint',function(e){e.stopImmediatePropagation();});
+  document.addEventListener('copy',function(e){
+    if(e.clipboardData){e.clipboardData.setData('text/plain','© NomuKing 무단 복제 금지');}
+    e.preventDefault();
+  });
+})();
+</script>
+
+<!-- 네비게이션 -->
+<nav>
+  <a href="index.html" class="nav-logo">NomuKing</a>
+  <div class="nav-links">
+    <a href="index.html">홈</a>
+    <a href="harassment.html">직장 내 괴롭힘</a>
+    <a href="unfair_dismissal.html" class="active">부당해고</a>
+    <a href="board.html">커뮤니티</a>
+  </div>
+</nav>
+
+<!-- 상담 모달 -->
+<div class="modal-overlay" id="consultModal">
+  <div class="modal-box">
+    <div id="modal-form-area">
+      <h3>👨‍⚖️ 노무사 상담 신청</h3>
+      <p class="modal-sub">진단 결과와 함께 전달됩니다. 영업일 1~2일 내 연락드립니다.</p>
+      <form onsubmit="submitConsult(event)">
+        <div class="mf"><label>이름 *</label><input type="text" id="c-name" required placeholder="홍길동"></div>
+        <div class="mf"><label>전화번호 *</label><input type="tel" id="c-phone" required placeholder="010-0000-0000"></div>
+        <div class="mf"><label>이메일</label><input type="email" id="c-email" placeholder="example@email.com"></div>
+        <div class="mf"><label>구체적인 내용 *</label><textarea id="c-content" required placeholder="해고 날짜, 사유, 현재 상황을 자유롭게 적어주세요."></textarea></div>
+        <div class="modal-actions">
+          <button type="button" class="btn-mc" onclick="closeConsultModal()">취소</button>
+          <button type="submit" class="btn-ms">상담 신청하기</button>
+        </div>
+      </form>
+    </div>
+    <div class="form-success" id="modal-success">
+      <div class="ck">✅</div>
+      <p>상담 신청이 완료되었습니다!</p>
+      <p style="color:var(--sub);font-size:13px;font-weight:normal;margin-top:6px;">영업일 1~2일 내 담당 노무사가 연락드립니다.</p>
+      <button class="btn-mc" style="margin-top:18px;width:100%;" onclick="closeConsultModal()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 본문 -->
+<div class="layout-wrapper">
+
+  <!-- 사이드바 -->
+  <div class="sidebar">
+    <div class="sb-header">📋 진단 현황</div>
+    <div class="sb-item active" id="sb-st1" onclick="jumpTo(1)">
+      <div class="sb-title">1단계. 적용 요건 확인</div>
+      <div class="sb-val" id="sb-v1">진행 중</div>
+    </div>
+    <div class="sb-item locked" id="sb-st2" onclick="jumpTo(2)">
+      <div class="sb-title">2단계. 해고 유형</div>
+      <div class="sb-val" id="sb-v2">대기 중</div>
+    </div>
+    <div class="sb-item locked" id="sb-st3" onclick="jumpTo(3)">
+      <div class="sb-title">3단계. 해고사유 분석</div>
+      <div class="sb-val" id="sb-v3">대기 중</div>
+    </div>
+    <div class="sb-item locked" id="sb-st4" onclick="jumpTo(4)">
+      <div class="sb-title">4단계. 절차 정당성</div>
+      <div class="sb-val" id="sb-v4">대기 중</div>
+    </div>
+  </div>
+
+  <!-- 메인 -->
+  <div class="container">
+    <div class="loading-overlay" id="loading-screen">
+      <div class="spinner"></div>
+      <div class="loading-text" id="loading-msg">분석 중...</div>
+    </div>
+
+    <div class="page-title">⚖️ 부당해고 판독기</div>
+    <p class="page-desc">NomuKing의 노무사 판단 로직으로 해고 정당성을 정밀 분석합니다.</p>
+
+    <!-- ════════════════════════════════
+         STAGE 1. 적용 요건 필터
+    ════════════════════════════════ -->
+    <div id="stage1" class="step-section" style="display:block;">
+
+      <div class="q-title">1단계. 기본 적용 요건을 확인합니다</div>
+
+      <!-- 1-1 사업장 규모 -->
+      <div class="q-label">① 다니시던 사업장의 상시 근로자 수는?</div>
+      <button class="option-btn s1a-opt" onclick="sel('s1a',0,'5인 이상',this)">상시 근로자 5인 이상</button>
+      <button class="option-btn s1a-opt" onclick="sel('s1a',1,'5인 미만',this)">상시 근로자 4인 이하 (소규모 사업장)</button>
+      <button class="option-btn s1a-opt" onclick="sel('s1a',2,'규모 모름',this)">정확히 모르겠습니다</button>
+
+      <!-- 1-2 고용형태 -->
+      <div class="q-label" id="q1b" style="display:none;">② 고용 형태는?</div>
+      <div id="opts1b" style="display:none;">
+        <button class="option-btn s1b-opt" onclick="sel('s1b',0,'정규직',this)">정규직 (기간의 정함이 없는 근로자)</button>
+        <button class="option-btn s1b-opt" onclick="sel('s1b',1,'기간제(계약직)',this)">기간제 / 계약직</button>
+        <button class="option-btn s1b-opt" onclick="sel('s1b',2,'수습 중',this)">수습 기간 중 (입사 3개월 이내)</button>
+        <button class="option-btn s1b-opt" onclick="sel('s1b',3,'일용직',this)">일용직 / 단기 근로자</button>
+      </div>
+
+      <!-- 1-3 해고절대금지기간 -->
+      <div class="q-label" id="q1c" style="display:none;">③ 해고 통보 당시 아래 상황에 해당하셨나요?</div>
+      <div id="opts1c" style="display:none;">
+        <p style="font-size:13px;color:var(--sub);margin-bottom:10px;">해당하는 항목이 있으면 선택해 주세요 (근로기준법 제23조 제2항)</p>
+        <button class="option-btn s1c-opt danger" onclick="sel('s1c',1,'업무상 요양 중',this)">🚨 업무상 부상·질병으로 요양 중이었음</button>
+        <button class="option-btn s1c-opt danger" onclick="sel('s1c',2,'요양 후 30일 이내',this)">🚨 업무상 요양 종료 후 30일이 경과하지 않은 시점이었음</button>
+        <button class="option-btn s1c-opt danger" onclick="sel('s1c',3,'출산전후휴가 중',this)">🚨 출산전후휴가(산전후 90일) 기간 중이었음</button>
+        <button class="option-btn s1c-opt danger" onclick="sel('s1c',4,'출산휴가 후 30일 이내',this)">🚨 출산전후휴가 종료 후 30일이 경과하지 않은 시점이었음</button>
+        <button class="option-btn s1c-opt" onclick="sel('s1c',0,'해당 없음',this)">위 항목에 해당하지 않습니다</button>
+      </div>
+
+      <div id="alert-five" class="alert-box alert-yellow">
+        <strong>⚠️ 5인 미만 사업장 안내</strong><br>
+        근로기준법상 부당해고 구제신청(노동위원회)은 <strong>상시 5인 이상</strong> 사업장에만 적용됩니다.<br>
+        다만, 아래의 권리는 사업장 규모와 관계없이 청구 가능합니다.<br>
+        • <strong>해고예고수당</strong> (30일치 통상임금, 근로기준법 제26조)<br>
+        • <strong>임금·퇴직금</strong> 미지급 진정<br>
+        • 민사소송을 통한 해고무효 확인
+      </div>
+
+      <button id="btn-next1" class="btn-next" onclick="goTo(2)">다음 단계 →</button>
+    </div>
+
+    <!-- ════════════════════════════════
+         STAGE 2. 해고 유형
+    ════════════════════════════════ -->
+    <div id="stage2" class="step-section">
+      <div class="q-title">2단계. 어떤 방식으로 해고되셨나요?</div>
+      <div class="q-sub">가장 실질에 가까운 유형을 선택해 주세요.</div>
+
+      <button class="option-btn s2-opt" onclick="sel('s2',0,'징계해고',this)">📋 징계해고 — 취업규칙 위반, 비위행위 등을 사유로 일방 해고 통보</button>
+      <button class="option-btn s2-opt" onclick="sel('s2',1,'권고사직 강요',this)">🤝 권고사직 강요 — 사직서 제출을 압박받거나 강요받았음</button>
+      <button class="option-btn s2-opt" onclick="sel('s2',2,'정리해고',this)">📉 정리해고 — 경영악화·구조조정을 이유로 해고</button>
+      <button class="option-btn s2-opt" onclick="sel('s2',3,'계약만료 미갱신',this)">📄 계약만료 미갱신 — 기간제 계약 종료 후 갱신 거절</button>
+      <button class="option-btn s2-opt" onclick="sel('s2',4,'당연퇴직 통보',this)">🚪 당연퇴직 통보 — 특정 사유 발생을 이유로 자동 퇴직 처리</button>
+
+      <button id="btn-next2" class="btn-next" onclick="goTo(3)">다음 단계 →</button>
+    </div>
+
+    <!-- ════════════════════════════════
+         STAGE 3. 해고사유 분석
+    ════════════════════════════════ -->
+    <div id="stage3" class="step-section">
+      <div class="q-title">3단계. 해고사유를 분석합니다</div>
+
+      <!-- 3-A 사유의 법적 성격 -->
+      <div id="s3a-wrap">
+        <div class="depth-chip">STEP A — 사유의 법적 성격</div>
+        <div class="q-sub">회사가 제시한 해고 사유의 성격은 무엇인가요?</div>
+        <button class="option-btn s3a-opt" onclick="sel('s3a',0,'범죄 확정형',this)">⚖️ 범죄 확정형 — 형사 유죄판결이 확정된 행위를 사유로 들었음</button>
+        <button class="option-btn s3a-opt" onclick="sel('s3a',1,'범죄 혐의형',this)">🔍 범죄 혐의형 — 범죄 수준이나 수사 중·기소 중·미확정 상태</button>
+        <button class="option-btn s3a-opt" onclick="sel('s3a',2,'민사·행정 위반형',this)">📝 민사·행정 위반형 — 형사는 아니나 법령·계약 위반을 사유로 들었음</button>
+        <button class="option-btn s3a-opt" onclick="sel('s3a',3,'사내 규정 위반형',this)">📌 사내 규정 위반형 — 취업규칙·복무규정 위반을 사유로 들었음</button>
+        <button class="option-btn s3a-opt" onclick="sel('s3a',4,'능력·태도 불량형',this)">📊 능력·태도 불량형 — 저성과, 근무태도, 잦은 결근 등을 사유로 들었음</button>
+        <button class="option-btn s3a-opt" onclick="sel('s3a',5,'사유 불명확',this)">❓ 사유 불명확 — 구체적 사유 없이 해고 통보를 받았음</button>
+      </div>
+
+      <!-- 3-B 행위 카테고리 (동적 생성) -->
+      <div id="s3b-wrap" style="display:none;margin-top:20px;padding-top:18px;border-top:1px dashed #CBD5E0;">
+        <div class="depth-chip">STEP B — 행위의 구체적 내용</div>
+        <div id="s3b-question" class="q-sub"></div>
+        <div id="s3b-options"></div>
+      </div>
+
+      <!-- 3-C 양정 적절성 -->
+      <div id="s3c-wrap" style="display:none;margin-top:20px;padding-top:18px;border-top:1px dashed #CBD5E0;">
+        <div class="depth-chip">STEP C — 양정(量定) 적절성</div>
+        <div class="q-sub">해고라는 처분이 사안에 비례하는지 확인합니다.</div>
+
+        <div class="q-label">① 동일·유사 사유로 다른 직원은 어떻게 처리되었나요?</div>
+        <button class="option-btn s3c1-opt" onclick="sel('s3c1',0,'본인만 해고',this)">다른 직원은 경고·감봉·정직 등 경한 처분이었고 나만 해고됨</button>
+        <button class="option-btn s3c1-opt" onclick="sel('s3c1',1,'비슷하게 해고',this)">비슷한 사유로 다른 직원도 해고된 사례가 있음</button>
+        <button class="option-btn s3c1-opt" onclick="sel('s3c1',2,'모름',this)">다른 사례를 알 수 없음</button>
+
+        <div class="q-label" id="q3c2" style="display:none;">② 이번 해고 전 징계 전력이 있나요?</div>
+        <div id="opts3c2" style="display:none;">
+          <button class="option-btn s3c2-opt" onclick="sel('s3c2',0,'전력 없음',this)">없음 — 이번이 처음임</button>
+          <button class="option-btn s3c2-opt" onclick="sel('s3c2',1,'경고 1회',this)">동일 사유로 경고 1회 받은 적 있음</button>
+          <button class="option-btn s3c2-opt" onclick="sel('s3c2',2,'반복 징계',this)">동일 사유로 2회 이상 경고·징계 이력 있음</button>
+        </div>
+
+        <div class="q-label" id="q3c3" style="display:none;">③ 해고 전 개선 기회(경고·시말서·PIP 등)가 주어졌나요?</div>
+        <div id="opts3c3" style="display:none;">
+          <button class="option-btn s3c3-opt" onclick="sel('s3c3',0,'아무 조치 없이 해고',this)">아무런 사전 경고·조치 없이 바로 해고 통보</button>
+          <button class="option-btn s3c3-opt" onclick="sel('s3c3',1,'구두 경고만',this)">구두 경고는 있었으나 서면 경고·PIP는 없었음</button>
+          <button class="option-btn s3c3-opt" onclick="sel('s3c3',2,'서면 경고 후 해고',this)">서면 경고 또는 PIP 진행 후 개선이 없어 해고됨</button>
+        </div>
+      </div>
+
+      <button id="btn-next3" class="btn-next" onclick="goTo(4)">다음 단계 →</button>
+    </div>
+
+    <!-- ════════════════════════════════
+         STAGE 4. 절차 정당성
+    ════════════════════════════════ -->
+    <div id="stage4" class="step-section">
+      <div class="q-title">4단계. 절차의 정당성을 확인합니다</div>
+      <div class="q-sub">절차 위반은 그 자체로 부당해고 인정 사유가 됩니다.</div>
+
+      <div class="q-label">① 해고를 서면으로 통보받으셨나요?</div>
+      <button class="option-btn s4a-opt" onclick="sel('s4a',0,'서면 없음',this)">구두(말)로만 통보받았음 — 서면 없음</button>
+      <button class="option-btn s4a-opt" onclick="sel('s4a',1,'카톡·문자',this)">카카오톡·문자메시지로 통보받았음</button>
+      <button class="option-btn s4a-opt" onclick="sel('s4a',2,'공식 서면',this)">해고통지서 등 공식 서면을 받았음</button>
+
+      <div class="q-label" id="q4b" style="display:none;">② 해고 전 소명(해명) 기회가 주어졌나요?</div>
+      <div id="opts4b" style="display:none;">
+        <button class="option-btn s4b-opt" onclick="sel('s4b',0,'전혀 없음',this)">소명 기회가 전혀 없었음</button>
+        <button class="option-btn s4b-opt" onclick="sel('s4b',1,'형식적으로만',this)">형식적으로만 있었고 실질적 방어 기회가 없었음</button>
+        <button class="option-btn s4b-opt" onclick="sel('s4b',2,'충분히 있었음',this)">충분한 소명 기회가 있었음</button>
+      </div>
+
+      <div class="q-label" id="q4c" style="display:none;">③ 징계위원회 절차가 진행되었나요? (징계해고의 경우)</div>
+      <div id="opts4c" style="display:none;">
+        <button class="option-btn s4c-opt" onclick="sel('s4c',0,'미진행',this)">징계위원회가 열리지 않았음 (또는 해당 없음)</button>
+        <button class="option-btn s4c-opt" onclick="sel('s4c',1,'형식적 진행',this)">위원회는 열렸으나 형식적이었고 결과가 사전에 정해진 듯했음</button>
+        <button class="option-btn s4c-opt" onclick="sel('s4c',2,'정식 진행',this)">정식으로 진행되었음</button>
+      </div>
+
+      <!-- 해고예고 (점수 무관, 별도 안내) -->
+      <div id="q4d-wrap" style="display:none;">
+        <div class="q-label">④ 해고 30일 전 예고를 받으셨나요?</div>
+        <p style="font-size:12px;color:var(--sub);margin-bottom:10px;">※ 이 항목은 해고 정당성 점수와 무관합니다. 예고수당 청구 여부 안내용입니다.</p>
+        <button class="option-btn s4d-opt" onclick="sel('s4d',0,'예고 없음',this)">예고 없이 즉시 해고 통보 (당일 또는 며칠 내)</button>
+        <button class="option-btn s4d-opt" onclick="sel('s4d',1,'30일 미만',this)">해고 통보를 받았으나 30일이 되지 않았음</button>
+        <button class="option-btn s4d-opt" onclick="sel('s4d',2,'30일 이상',this)">30일 이상 전에 예고를 받았음</button>
+      </div>
+
+      <button id="btn-submit" class="btn-submit" onclick="loading('부당해고 여부를 종합 판단 중입니다...', 1200, calcResult)">최종 결과 확인하기</button>
+    </div>
+
+    <!-- ════════════════════════════════
+         결과 화면
+    ════════════════════════════════ -->
+    <div id="result-wrap" class="result-wrap">
+
+      <!-- 즉시 확정 결과 (절대금지기간) -->
+      <div id="result-certain" style="display:none;">
+        <div class="result-hero certain">
+          <div class="r-label">부당해고 성립 확률</div>
+          <div class="r-score">100%</div>
+          <div class="r-sub">해고절대금지기간 — 사유·절차 불문 무효</div>
+        </div>
+        <div class="notice-urgent">
+          <strong>🚨 즉각 대응이 필요합니다</strong><br>
+          근로기준법 제23조 제2항에 따라 업무상 요양 기간 및 출산전후휴가 기간과 그 후 30일간은 해고가 <strong>절대적으로 금지</strong>됩니다. 해고 사유와 절차에 관계없이 해당 해고는 무효입니다.<br><br>
+          <strong>⏰ 구제신청 시효: 해고일로부터 90일 이내</strong><br>
+          → 노동위원회 부당해고 구제신청 또는 법원 해고무효확인 소송으로 즉시 대응하세요.
+        </div>
+        <button class="btn-consult" id="btn-consult-c" style="display:block;" onclick="openConsultModal()">👨‍⚖️ 노무사와 상담하기</button>
+        <button class="btn-reset" onclick="resetAll()">🔄 처음으로 돌아가기</button>
+      </div>
+
+      <!-- 5인 미만 결과 -->
+      <div id="result-five" style="display:none;">
+        <div class="result-hero low">
+          <div class="r-label">노동위원회 구제신청</div>
+          <div class="r-score" style="font-size:28px;margin-top:4px;">불가</div>
+          <div class="r-sub">상시 5인 미만 사업장 — 구제신청 적용 제외</div>
+        </div>
+        <div class="notice-five" style="display:block;">
+          <strong>⚠️ 5인 미만 사업장 안내</strong><br>
+          근로기준법상 부당해고 구제신청은 <strong>상시 5인 이상</strong> 사업장에만 적용됩니다.<br>
+          다만 아래 권리는 규모와 무관하게 청구 가능합니다.<br><br>
+          • <strong>해고예고수당</strong> — 30일 전 예고 없이 해고 시 30일치 통상임금 청구 가능<br>
+          • <strong>임금·퇴직금</strong> 미지급 진정<br>
+          • <strong>민사소송</strong>을 통한 해고무효 확인
+        </div>
+        <button class="btn-consult" style="display:block;" onclick="openConsultModal()">👨‍⚖️ 노무사와 상담하기</button>
+        <button class="btn-reset" onclick="resetAll()">🔄 처음으로 돌아가기</button>
+      </div>
+
+      <!-- 일반 결과 -->
+      <div id="result-normal" style="display:none;">
+        <div class="result-hero" id="r-hero">
+          <div class="r-label">부당해고 성립 확률</div>
+          <div class="r-score" id="r-score-txt">0%</div>
+          <div class="r-sub" id="r-hero-sub"></div>
+        </div>
+
+        <div class="notice-urgent" id="r-urgent" style="display:none;"></div>
+        <div class="notice-money" id="r-money"></div>
+
+        <div class="result-card">
+          <h3>📊 점수 산정 내역</h3>
+          <div id="r-score-breakdown"></div>
+        </div>
+
+        <div class="result-card">
+          <h3>💡 종합 의견 및 대응 전략</h3>
+          <div id="r-opinion"></div>
+        </div>
+
+        <div class="notice-urgent">
+          <strong>⏰ 구제신청 시효 주의</strong><br>
+          부당해고 구제신청은 <strong>해고일로부터 90일 이내</strong>에 관할 지방노동위원회에 신청해야 합니다. 시효가 지나면 구제받을 수 없습니다.
+        </div>
+
+        <button class="btn-consult" id="btn-consult-n" onclick="openConsultModal()">👨‍⚖️ 노무사와 상담하기</button>
+        <button class="btn-reset" onclick="resetAll()" style="margin-top:10px;">🔄 처음으로 돌아가기</button>
+      </div>
+
+    </div><!-- /result-wrap -->
+
+    <div class="copyright">
+      본 판독기의 진단 알고리즘은 관련 법령에 의해 보호받습니다.<br>
+      <strong>Copyright © 2024 NomuKing. 무단 도용 및 복제 시 민형사상 책임을 묻습니다.</strong>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════
+   상태 관리
+════════════════════════════════════════ */
+var S = {
+  s1a:-1, s1b:-1, s1c:-1,
+  s2:-1,
+  s3a:-1, s3b:-1, s3c1:-1, s3c2:-1, s3c3:-1,
+  s4a:-1, s4b:-1, s4c:-1, s4d:-1,
+  dismissed5:false, certainBan:false
+};
+var SB = { st1:'진행 중', st2:'대기 중', st3:'대기 중', st4:'대기 중' };
+var highestStage = 1;
+
+/* 3-B 분기 데이터 */
+var B_DATA = {
+  /* 범죄 확정형 */
+  0: {
+    q:'어떤 종류의 범죄인가요?',
+    opts:[
+      {t:'업무 직결 범죄 (횡령·배임·사기 등 직무와 직접 연관)', score:-10},
+      {t:'직장 내 성범죄 (동료·부하 직원 대상 성희롱·성추행·성폭력)', score:-8},
+      {t:'직장 내 폭력 (동료·상사에 대한 폭행·상해)', score:-5},
+      {t:'업무 외 범죄 (사생활 영역, 회사 업무와 전혀 무관)', score:15}
+    ]
+  },
+  /* 범죄 혐의형 */
+  1: {
+    q:'현재 사건의 진행 상태는 어떻게 되나요?',
+    opts:[
+      {t:'수사 중 (아직 피의자 단계, 기소 전)', score:20},
+      {t:'기소됨 (재판 진행 중이나 판결 미확정)', score:15},
+      {t:'무혐의·불기소 처분 후에도 해고됨', score:30},
+      {t:'벌금형·약식명령만 확정 (징역·실형 아님)', score:10}
+    ]
+  },
+  /* 민사·행정 위반형 */
+  2: {
+    q:'주된 위반 내용은 무엇인가요?',
+    opts:[
+      {t:'경쟁사 취업·겸직 (취업규칙에 금지 조항 없음)', score:15},
+      {t:'경쟁사 취업·겸직 (취업규칙에 금지 조항 있음)', score:5},
+      {t:'영업비밀·기밀 누설 (고의적, 실제 피해 발생)', score:-8},
+      {t:'허위 이력서·학력 위조 (업무 수행 능력과 직결)', score:-5},
+      {t:'부정청탁·금품 수수 (직무 관련, 고액)', score:-7}
+    ]
+  },
+  /* 사내 규정 위반형 */
+  3: {
+    q:'주된 징계 사유로 제시된 항목은?',
+    opts:[
+      {t:'무단결근 (3일 미만, 1~2회 정도)', score:15},
+      {t:'무단결근 (3일 이상 반복·장기)', score:0},
+      {t:'업무 지시 불이행 (지시 자체가 부당했다고 판단됨)', score:20},
+      {t:'SNS·언론 발언 문제 (공익적 내용 또는 회사 실명 미언급)', score:15},
+      {t:'사생활 관련 규정 위반 (취업규칙 근거 없음)', score:25},
+      {t:'음주·복장 등 복무규정 위반 (1회성)', score:10}
+    ]
+  },
+  /* 능력·태도 불량형 */
+  4: {
+    q:'회사가 해고 전에 어떤 조치를 취했나요?',
+    opts:[
+      {t:'아무런 사전 조치 없이 바로 해고', score:25},
+      {t:'구두 경고만 하고 해고 (서면·PIP 없음)', score:15},
+      {t:'PIP·서면 경고 후에도 개선이 없어 해고', score:5},
+      {t:'명확한 목표·기준 제시 후 지속 미달로 해고', score:-5}
+    ]
+  },
+  /* 사유 불명확 */
+  5: {
+    q:'해고 사유를 어떤 방식으로 전달받았나요?',
+    opts:[
+      {t:'아무런 사유 설명 없이 일방적으로 해고됨', score:30},
+      {t:'추상적인 사유만 언급 (예: "회사 사정", "적합하지 않음")', score:25},
+      {t:'사유를 요청했으나 거부당함', score:30}
+    ]
+  }
+};
+
+/* 절차위반 안내문 */
+var PROC_MSG = {
+  징계해고:'징계해고의 경우 ① 해고 사유·시기 서면 통보, ② 소명 기회 부여, ③ 취업규칙에 따른 징계위원회 절차가 모두 필요합니다.',
+  권고사직강요:'권고사직 강요의 경우에도 실질적으로 해고에 해당하면 동일한 절차 요건이 적용됩니다.',
+  정리해고:'정리해고는 ① 긴박한 경영 필요, ② 해고 회피 노력, ③ 합리적 기준에 의한 선정, ④ 노조·근로자 대표와 50일 전 협의의 4대 요건이 모두 충족되어야 합니다.',
+  계약만료미갱신:'계약 만료의 경우 갱신 기대권이 있는지 여부가 핵심입니다. 반복 갱신 횟수·사용자의 갱신 약속 언동이 중요합니다.',
+  당연퇴직통보:'당연퇴직 조항이 취업규칙에 명시되어 있지 않거나 적법하지 않은 경우 부당해고에 해당할 수 있습니다.'
+};
+
+var dismissalTypeLabel = ['징계해고','권고사직강요','정리해고','계약만료미갱신','당연퇴직통보'];
+
+/* ════════════════════════════════════════
+   공통 유틸
+════════════════════════════════════════ */
+function sel(key, val, label, btn){
+  document.querySelectorAll('.'+key+'-opt').forEach(function(b){b.classList.remove('selected');});
+  btn.classList.add('selected');
+  S[key] = val;
+  onSelect(key, val, label);
+}
+
+function show(id){ var e=document.getElementById(id); if(e) e.style.display='block'; }
+function hide(id){ var e=document.getElementById(id); if(e) e.style.display='none'; }
+function showFlex(id){ var e=document.getElementById(id); if(e) e.style.display='flex'; }
+
+function loading(msg, dur, cb){
+  document.getElementById('loading-msg').innerText = msg;
+  showFlex('loading-screen');
+  setTimeout(function(){ hide('loading-screen'); cb(); }, dur);
+}
+
+function updateSidebar(active){
+  [1,2,3,4].forEach(function(n){
+    var el=document.getElementById('sb-st'+n);
+    var vl=document.getElementById('sb-v'+n);
+    if(!el) return;
+    el.classList.remove('active','locked');
+    if(n > highestStage) el.classList.add('locked');
+    if(n === active) el.classList.add('active');
+    if(vl) vl.innerText = SB['st'+n];
+  });
+}
+
+function jumpTo(n){
+  if(n > highestStage) return;
+  document.querySelectorAll('.step-section').forEach(function(e){e.style.display='none';});
+  hide('result-wrap');
+  document.getElementById('stage'+n).style.display = 'block';
+  updateSidebar(n);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function goTo(n){
+  loading('분석 중입니다...', 500, function(){
+    highestStage = Math.max(highestStage, n);
+    jumpTo(n);
+  });
+}
+
+/* ════════════════════════════════════════
+   STAGE 1 로직
+════════════════════════════════════════ */
+function onSelect(key, val, label){
+  if(key === 's1a'){
+    hide('alert-five');
+    hide('q1b'); hide('opts1b');
+    hide('q1c'); hide('opts1c');
+    hide('btn-next1');
+    if(val === 1){ // 5인 미만
+      show('alert-five');
+      S.dismissed5 = true;
+      SB.st1 = '5인 미만 사업장';
+      highestStage = Math.max(highestStage, 2);
+      show('btn-next1');
+      document.getElementById('btn-next1').onclick = function(){
+        loading('확인 중...', 400, function(){
+          showResult('five');
+        });
+      };
+    } else {
+      S.dismissed5 = false;
+      SB.st1 = label;
+      show('q1b'); show('opts1b');
+    }
+    updateSidebar(1);
+  }
+
+  if(key === 's1b'){
+    SB.st1 = label;
+    show('q1c'); show('opts1c');
+    updateSidebar(1);
+  }
+
+  if(key === 's1c'){
+    if(val > 0){ // 절대금지기간
+      SB.st1 = label + ' (절대금지기간)';
+      S.certainBan = true;
+      highestStage = Math.max(highestStage, 2);
+      document.getElementById('btn-next1').onclick = function(){
+        loading('판단 중...', 600, function(){
+          showResult('certain');
+        });
+      };
+    } else {
+      S.certainBan = false;
+      SB.st1 = (S.s1b >= 0 ? ['정규직','기간제','수습','일용직'][S.s1b] : '') + ' / 해당 없음';
+      document.getElementById('btn-next1').onclick = function(){ goTo(2); };
+      highestStage = Math.max(highestStage, 2);
+    }
+    show('btn-next1');
+    updateSidebar(1);
+  }
+
+  /* Stage 2 */
+  if(key === 's2'){
+    SB.st2 = label;
+    highestStage = Math.max(highestStage, 3);
+    show('btn-next2');
+    updateSidebar(2);
+  }
+
+  /* Stage 3-A */
+  if(key === 's3a'){
+    SB.st3 = label;
+    S.s3b = -1;
+    render3B(val);
+    updateSidebar(3);
+  }
+
+  /* Stage 3-B */
+  if(key === 's3b'){
+    show('s3c-wrap');
+    updateSidebar(3);
+  }
+
+  /* Stage 3-C 연쇄 표시 */
+  if(key === 's3c1'){
+    show('q3c2'); show('opts3c2');
+  }
+  if(key === 's3c2'){
+    show('q3c3'); show('opts3c3');
+  }
+  if(key === 's3c3'){
+    highestStage = Math.max(highestStage, 4);
+    show('btn-next3');
+    updateSidebar(3);
+  }
+
+  /* Stage 4 연쇄 표시 */
+  if(key === 's4a'){
+    show('q4b'); show('opts4b');
+  }
+  if(key === 's4b'){
+    if(S.s2 === 0 || S.s2 === 1){ show('q4c'); show('opts4c'); }
+    else { showFinalBtn(); }
+  }
+  if(key === 's4c'){
+    showFinalBtn();
+  }
+  if(key === 's4d'){
+    show('btn-submit');
+  }
+}
+
+function showFinalBtn(){
+  show('q4d-wrap');
+}
+
+function render3B(typeIdx){
+  var data = B_DATA[typeIdx];
+  if(!data) return;
+  document.getElementById('s3b-question').innerText = data.q;
+  var cont = document.getElementById('s3b-options');
+  cont.innerHTML = '';
+  data.opts.forEach(function(o, i){
+    var btn = document.createElement('button');
+    btn.className = 'option-btn s3b-opt';
+    btn.innerText = o.t;
+    btn.onclick = function(){ sel('s3b', i, o.t, this); };
+    cont.appendChild(btn);
+  });
+  show('s3b-wrap');
+}
+
+/* ════════════════════════════════════════
+   결과 계산
+════════════════════════════════════════ */
+function calcResult(){
+  var score = 40;
+  var breakdown = [];
+  var breakdown_minus = [];
+
+  /* 3-A 사유 성격 */
+  var s3a_bonus = [0, 0, 0, 0, 15, 25]; // 마지막 두 개 (능력, 불명확)
+  if(S.s3a >= 0){
+    var add = s3a_bonus[S.s3a];
+    if(add > 0){ score += add; breakdown.push({l:'해고사유 입증 부담 ('+['범죄확정','범죄혐의','민사위반','규정위반','능력태도','사유불명확'][S.s3a]+')',v:'+'+add}); }
+  }
+
+  /* 3-B 행위 카테고리 */
+  if(S.s3a >= 0 && S.s3b >= 0){
+    var bScore = B_DATA[S.s3a].opts[S.s3b].score;
+    score += bScore;
+    var bLabel = B_DATA[S.s3a].opts[S.s3b].t.substring(0, 20) + '...';
+    if(bScore > 0) breakdown.push({l:'행위 유형 가산', v:'+'+bScore});
+    else if(bScore < 0) breakdown_minus.push({l:'행위 유형 감산 (사유 인정 가능성↑)', v:''+bScore});
+  }
+
+  /* 3-C1 형평성 */
+  if(S.s3c1 === 0){ score += 20; breakdown.push({l:'형평성 위반 (나만 해고)', v:'+20'}); }
+
+  /* 3-C2 전력 */
+  if(S.s3c2 === 0){ score += 15; breakdown.push({l:'징계 전력 없음 (초범)', v:'+15'}); }
+  else if(S.s3c2 === 2){ score -= 10; breakdown_minus.push({l:'반복 징계 이력', v:'-10'}); }
+
+  /* 3-C3 사전 경고 */
+  if(S.s3c3 === 0){ score += 10; breakdown.push({l:'사전 경고 전혀 없이 해고', v:'+10'}); }
+  else if(S.s3c3 === 1){ score += 5; breakdown.push({l:'구두 경고만 있었음', v:'+5'}); }
+
+  /* 해고 유형별 보정 */
+  if(S.s2 === 1){ score += 10; breakdown.push({l:'권고사직 강요 의심', v:'+10'}); } // 권고사직
+  if(S.s2 === 2){ score += 8;  breakdown.push({l:'정리해고 — 4대 요건 검토 필요', v:'+8'}); }
+  if(S.s2 === 4){ score += 8;  breakdown.push({l:'당연퇴직 — 취업규칙 근거 불명확', v:'+8'}); }
+
+  /* 4-A 서면 통보 */
+  if(S.s4a === 0){ score += 20; breakdown.push({l:'서면 통보 없음 (근기법 §27 위반)', v:'+20'}); }
+  else if(S.s4a === 1){ score += 10; breakdown.push({l:'카톡·문자 통보 (서면 논란 가능)', v:'+10'}); }
+
+  /* 4-B 소명 기회 */
+  if(S.s4b === 0){ score += 15; breakdown.push({l:'소명 기회 전혀 없음', v:'+15'}); }
+  else if(S.s4b === 1){ score += 8; breakdown.push({l:'소명 기회 형식적', v:'+8'}); }
+
+  /* 4-C 징계위원회 (징계해고만) */
+  if((S.s2 === 0 || S.s2 === 1) && S.s4c >= 0){
+    if(S.s4c === 0){ score += 10; breakdown.push({l:'징계위원회 미진행', v:'+10'}); }
+    else if(S.s4c === 1){ score += 5; breakdown.push({l:'징계위원회 형식적 진행', v:'+5'}); }
+  }
+
+  /* 수습 상한 */
+  if(S.s1b === 2){ score = Math.min(score, 40); }
+  /* 상한 */
+  score = Math.min(score, 99);
+  score = Math.max(score, 5);
+
+  /* 해고예고수당 안내 여부 */
+  var showMoney = (S.s4d === 0 || S.s4d === 1);
+
+  /* 결과 표시 */
+  var heroEl = document.getElementById('r-hero');
+  heroEl.className = 'result-hero ' + (score >= 70 ? 'high' : score >= 50 ? 'mid' : 'low');
+  document.getElementById('r-score-txt').innerText = Math.round(score) + '%';
+
+  var subTexts = {
+    0:'징계해고', 1:'권고사직 강요', 2:'정리해고', 3:'계약만료 미갱신', 4:'당연퇴직 통보'
+  };
+  document.getElementById('r-hero-sub').innerText = (S.s2 >= 0 ? subTexts[S.s2] : '') + ' | ' + (S.s1b >= 0 ? ['정규직','기간제','수습','일용직'][S.s1b] : '');
+
+  /* 점수 내역 */
+  var bdHtml = '<div class="r-row"><span class="lbl">기본 점수</span><span class="val">40점</span></div>';
+  breakdown.forEach(function(r){ bdHtml += '<div class="r-row"><span class="lbl">'+r.l+'</span><span class="val plus">'+r.v+'</span></div>'; });
+  breakdown_minus.forEach(function(r){ bdHtml += '<div class="r-row"><span class="lbl">'+r.l+'</span><span class="val minus">'+r.v+'</span></div>'; });
+  bdHtml += '<div class="r-row" style="margin-top:4px;"><span class="lbl" style="font-weight:700;color:var(--text);">최종 점수</span><span class="val" style="font-size:16px;">'+Math.round(score)+'점</span></div>';
+  document.getElementById('r-score-breakdown').innerHTML = bdHtml;
+
+  /* 종합 의견 */
+  var opinion = '';
+  var procKey = S.s2 >= 0 ? ['징계해고','권고사직강요','정리해고','계약만료미갱신','당연퇴직통보'][S.s2] : '';
+
+  if(score >= 80){
+    opinion = '<p><strong>부당해고에 해당할 가능성이 매우 높습니다.</strong></p>';
+    opinion += '<p>여러 항목에서 정당성 요건이 충족되지 않았습니다. 지금 즉시 관련 증거를 보존하고 관할 지방노동위원회에 구제신청을 준비하십시오.</p>';
+    show('r-urgent');
+    document.getElementById('r-urgent').innerHTML = '<strong>⏰ 지금 바로 행동하세요</strong><br>구제신청 시효는 <strong>해고일로부터 90일</strong>입니다. 하루라도 빨리 대응할수록 유리합니다.';
+    show('btn-consult-n');
+  } else if(score >= 60){
+    opinion = '<p><strong>부당해고에 해당할 가능성이 상당합니다.</strong></p>';
+    opinion += '<p>사유 또는 절차 측면에서 법적 다툼의 여지가 존재합니다. 메신저·이메일·녹취 등 증거를 체계적으로 정리하여 전문가와 함께 구제신청을 검토하십시오.</p>';
+    show('btn-consult-n');
+  } else if(score >= 40){
+    opinion = '<p><strong>법적 다툼의 여지는 있으나, 인정 가능성이 낮은 편입니다.</strong></p>';
+    opinion += '<p>해고 사유 자체의 정당성이 인정될 가능성이 있습니다. 다만, 절차 위반이 있다면 이 부분을 집중 공략하는 전략이 현실적으로 유리합니다.</p>';
+    show('btn-consult-n');
+  } else {
+    opinion = '<p><strong>해고의 정당성이 인정될 가능성이 높은 상황입니다.</strong></p>';
+    opinion += '<p>현재 입력된 정보를 기준으로 보면 사유와 절차 모두 법적 요건을 충족했을 가능성이 있습니다. 다만, 해고예고수당, 퇴직금, 실업급여 등 받을 수 있는 권리를 먼저 확인하시기 바랍니다.</p>';
+  }
+
+  if(procKey && PROC_MSG[procKey]){
+    opinion += '<p style="margin-top:12px;padding-top:10px;border-top:1px solid #E2E8F0;font-size:13px;color:var(--sub);"><strong>['+procKey+' 절차 기준]</strong> '+PROC_MSG[procKey]+'</p>';
+  }
+
+  document.getElementById('r-opinion').innerHTML = opinion;
+
+  /* 해고예고수당 */
+  if(showMoney){
+    show('r-money');
+    document.getElementById('r-money').innerHTML =
+      '<strong>💰 해고예고수당 청구 가능</strong><br>' +
+      '해고의 정당성과 별개로, 30일 전 예고 없이 해고된 경우 <strong>30일분 통상임금을 해고예고수당으로 청구</strong>할 수 있습니다 (근로기준법 제26조).<br>' +
+      '단, 수습 3개월 미만 / 일용직 / 근로자의 귀책 사유가 명백한 경우에는 적용 제외됩니다.';
+  }
+
+  showResult('normal');
+}
+
+function showResult(type){
+  document.querySelectorAll('.step-section').forEach(function(e){e.style.display='none';});
+  SB.st4 = '진단 완료';
+  updateSidebar(4);
+  show('result-wrap');
+  if(type === 'certain'){
+    show('result-certain'); hide('result-five'); hide('result-normal');
+  } else if(type === 'five'){
+    hide('result-certain'); show('result-five'); hide('result-normal');
+  } else {
+    hide('result-certain'); hide('result-five'); show('result-normal');
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ════════════════════════════════════════
+   리셋
+════════════════════════════════════════ */
+function resetAll(){
+  S = {s1a:-1,s1b:-1,s1c:-1,s2:-1,s3a:-1,s3b:-1,s3c1:-1,s3c2:-1,s3c3:-1,s4a:-1,s4b:-1,s4c:-1,s4d:-1,dismissed5:false,certainBan:false};
+  SB = {st1:'진행 중',st2:'대기 중',st3:'대기 중',st4:'대기 중'};
+  highestStage = 1;
+  document.querySelectorAll('.option-btn').forEach(function(b){b.classList.remove('selected');});
+
+  // 숨김 처리
+  ['alert-five','btn-next1','q1b','opts1b','q1c','opts1c',
+   'btn-next2','s3b-wrap','s3c-wrap','q3c2','opts3c2','q3c3','opts3c3','btn-next3',
+   'q4b','opts4b','q4c','opts4c','q4d-wrap','btn-submit',
+   'result-certain','result-five','result-normal','r-urgent','r-money',
+   'btn-consult-n'].forEach(function(id){ hide(id); });
+
+  hide('result-wrap');
+  jumpTo(1);
+}
+
+/* ════════════════════════════════════════
+   상담 모달
+════════════════════════════════════════ */
+function openConsultModal(){
+  document.getElementById('consultModal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeConsultModal(){
+  document.getElementById('consultModal').classList.remove('open');
+  document.body.style.overflow='';
+  document.getElementById('modal-form-area').style.display='block';
+  document.getElementById('modal-success').style.display='none';
+  document.getElementById('c-name').value='';
+  document.getElementById('c-phone').value='';
+  document.getElementById('c-email').value='';
+  document.getElementById('c-content').value='';
+}
+function submitConsult(e){
+  e.preventDefault();
+  var fd=new FormData();
+  fd.append('name',document.getElementById('c-name').value);
+  fd.append('phone',document.getElementById('c-phone').value);
+  fd.append('email',document.getElementById('c-email').value||'미입력');
+  fd.append('message',document.getElementById('c-content').value);
+  fd.append('_subject','[NomuKing] 부당해고 상담 신청: '+document.getElementById('c-name').value);
+  fd.append('_captcha','false');
+  fd.append('_template','table');
+  fetch('https://formsubmit.co/millenniumg@naver.com',{method:'POST',body:fd})
+    .finally(function(){
+      document.getElementById('modal-form-area').style.display='none';
+      document.getElementById('modal-success').style.display='block';
+    });
+}
+document.getElementById('consultModal').addEventListener('click',function(e){
+  if(e.target===this) closeConsultModal();
+});
+</script>
+</body>
+</html>
