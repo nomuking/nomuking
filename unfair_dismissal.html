@@ -312,6 +312,60 @@ body>div.layout-wrapper{display:flex;max-width:960px;width:100%;gap:20px;align-i
     <div id="stage3" class="step-section">
       <div class="q-title">3단계. 해고사유를 분석합니다</div>
 
+
+      <!-- 계약만료 전용: 갱신기대권 판단 (s2===3 일 때만 표시) -->
+      <div id="s2-renew-wrap" style="display:none;">
+        <div class="q-title">3단계. 갱신기대권을 판단합니다</div>
+        <div class="alert-box alert-blue" style="display:block;margin-bottom:16px;">
+          <strong>📋 대법원 2013다51674 판결 적용</strong><br>
+          기간제 계약 만료는 원칙적으로 퇴직이나, <strong>갱신에 대한 정당한 기대권</strong>이 인정되면 부당해고와 동일하게 봅니다.<br>
+          갱신기대권 인정 여부가 이 사건의 핵심입니다.
+        </div>
+
+        <div class="depth-chip">STEP A — 갱신 이력 확인</div>
+        <div class="q-label">① 지금까지 계약이 몇 회 갱신되었나요?</div>
+        <button class="option-btn renew-count-opt" onclick="selRenew('count',2,this)">3회 이상 반복 갱신되었음</button>
+        <button class="option-btn renew-count-opt" onclick="selRenew('count',1,this)">1~2회 갱신된 적 있음</button>
+        <button class="option-btn renew-count-opt" onclick="selRenew('count',0,this)">이번이 최초 계약 만료 (갱신된 적 없음)</button>
+
+        <div id="renew-q2" style="display:none;margin-top:16px;">
+          <div class="depth-chip">STEP B — 갱신 기준 존재 여부</div>
+          <div class="q-label">② 계약 갱신의 기준이나 조항이 있었나요?</div>
+          <button class="option-btn renew-system-opt" onclick="selRenew('system',2,this)">근로계약·취업규칙에 평가 양호 시 갱신된다는 조항이 있었음</button>
+          <button class="option-btn renew-system-opt" onclick="selRenew('system',1,this)">명문 조항은 없었으나 관행적으로 평가 양호하면 갱신되어 왔음</button>
+          <button class="option-btn renew-system-opt" onclick="selRenew('system',0,this)">갱신 기준 없이 사용자 재량으로 결정되어 왔음</button>
+        </div>
+
+        <div id="renew-q3" style="display:none;margin-top:16px;">
+          <div class="depth-chip">STEP C — 사용자의 언동 확인</div>
+          <div class="q-label">③ 회사(사용자)가 계속 근무를 기대하게 하는 언동을 했나요?</div>
+          <button class="option-btn renew-promise-opt" onclick="selRenew('promise',2,this)">명시적으로 계속 일할 수 있다고 약속하거나 말했음</button>
+          <button class="option-btn renew-promise-opt" onclick="selRenew('promise',1,this)">장기 업무를 배정하는 등 묵시적으로 계속 근무를 기대하게 했음</button>
+          <button class="option-btn renew-promise-opt" onclick="selRenew('promise',0,this)">계약 만료 시 당연히 종료된다는 인식이 있었고 별다른 언동 없었음</button>
+        </div>
+
+        <div id="renew-q4" style="display:none;margin-top:16px;">
+          <div class="depth-chip">STEP D — 평가 결과 및 갱신 거절 사유</div>
+          <div class="q-label">④ 이번 갱신 거절 사유를 통보받았나요?</div>
+          <button class="option-btn renew-reason-opt" onclick="selRenew('reason',0,this)">아무런 사유 없이 계약 만료 통보만 받았음</button>
+          <button class="option-btn renew-reason-opt" onclick="selRenew('reason',1,this)">추상적 사유(예: "경영 사정")만 들었음</button>
+          <button class="option-btn renew-reason-opt" onclick="selRenew('reason',2,this)">평가 불량·업무 부적합 등 구체적 사유를 통보받았음</button>
+        </div>
+
+        <!-- 갱신기대권 없음 판정 시 조기 종료 화면 -->
+        <div id="renew-no-expect" class="alert-box alert-yellow" style="display:none;margin-top:16px;">
+          <strong>⚠️ 갱신기대권 인정 가능성 낮음</strong><br>
+          최초 계약 만료이거나 갱신 기준·약속이 없는 경우, 계약 만료는 <strong>원칙적으로 부당해고에 해당하지 않습니다</strong> (대법원 2013다51674).<br><br>
+          다만 아래의 권리는 별도로 검토할 수 있습니다.<br>
+          • 해고예고수당 (30일 전 통보 없는 경우)<br>
+          • 퇴직금 (1년 이상 근무 시)<br>
+          • 실업급여 수급 자격
+        </div>
+
+        <button id="btn-renew-proceed" class="btn-next" style="display:none;" onclick="proceedAfterRenew()">계속하기 →</button>
+        <button id="btn-renew-finish" class="btn-next" style="display:none;background:#718096;" onclick="calcRenewNoExpect()">결과 확인하기 (갱신기대권 없음)</button>
+      </div>
+
       <!-- 3-A 사유의 법적 성격 -->
       <div id="s3a-wrap">
         <div class="depth-chip">STEP A — 사유의 법적 성격</div>
@@ -453,6 +507,29 @@ body>div.layout-wrapper{display:flex;max-width:960px;width:100%;gap:20px;align-i
         <button class="btn-reset" onclick="resetAll()">🔄 처음으로 돌아가기</button>
       </div>
 
+
+      <!-- 갱신기대권 없음 결과 -->
+      <div id="result-renew-no" style="display:none;">
+        <div class="result-hero low">
+          <div class="r-label">부당해고 구제신청 가능성</div>
+          <div class="r-score" style="font-size:28px;margin-top:4px;">낮음</div>
+          <div class="r-sub">갱신기대권 미인정 — 계약 만료 원칙 적용</div>
+        </div>
+        <div class="result-card">
+          <h3>💡 종합 의견</h3>
+          <p>대법원 판례(2013다51674)에 따르면, 기간제 계약 만료는 원칙적으로 근로관계가 종료됩니다. 갱신에 대한 정당한 기대권이 형성되지 않은 경우 사용자의 갱신 거절은 부당해고에 해당하지 않습니다.</p>
+          <p style="margin-top:10px;">갱신기대권이 인정되려면 ① 반복 갱신 이력, ② 평가 기반 갱신 조항·관행, ③ 사용자의 갱신 암시·언동 중 복수의 요소가 충족되어야 합니다.</p>
+        </div>
+        <div class="notice-info">
+          <strong>💰 별도로 검토할 수 있는 권리</strong><br>
+          • <strong>해고예고수당</strong> — 30일 전 예고 없이 계약 종료 통보 시 30일치 통상임금 청구 가능<br>
+          • <strong>퇴직금</strong> — 1년 이상 계속 근무 시 지급 의무<br>
+          • <strong>실업급여</strong> — 계약 만료에 의한 비자발적 이직으로 수급 자격 발생
+        </div>
+        <button class="btn-consult" style="display:block;" onclick="openConsultModal()">👨‍⚖️ 노무사와 상담하기</button>
+        <button class="btn-reset" onclick="resetAll()" style="margin-top:10px;">🔄 처음으로 돌아가기</button>
+      </div>
+
       <!-- 5인 미만 결과 -->
       <div id="result-five" style="display:none;">
         <div class="result-hero low">
@@ -510,6 +587,7 @@ var S = {
   s1a:-1, s1b:-1, s1c:-1,
   s2:-1,
   resignSigned:-1, resignLvl:-1,
+  renewCount:-1, renewSystem:-1, renewPromise:-1, renewReason:-1,
   s3a:-1, s3b:-1, s3c1:-1, s3c2:-1, s3c3:-1,
   s4a:-1, s4b:-1, s4c:-1, s4c2:-1, s4d:-1,
   dismissed5:false, certainBan:false, dismissalDate:null
@@ -667,7 +745,20 @@ function jumpTo(n){
 function goTo(n){
   loading('분석 중입니다...', 500, function(){
     highestStage = Math.max(highestStage, n);
-    jumpTo(n);
+    if(n === 3 && S.s2 === 3){
+      // 계약만료: 갱신기대권 전용 화면
+      document.querySelectorAll('.step-section').forEach(function(e){e.style.display='none';});
+      document.getElementById('stage3').style.display = 'block';
+      hide('s3a-wrap');
+      show('s2-renew-wrap');
+      updateSidebar(3);
+      window.scrollTo({top:0,behavior:'smooth'});
+    } else {
+      // 계약만료가 아닐 때: 갱신기대권 wrap 숨김
+      hide('s2-renew-wrap');
+      show('s3a-wrap');
+      jumpTo(n);
+    }
   });
 }
 
@@ -735,6 +826,11 @@ function onSelect(key, val, label){
   /* Stage 2→3 전환 시 권고사직이면 resign 섹션 먼저 보여주기 */
   if(key === 's3a' && S.s2 === 1){
     show('s2-resign-wrap');
+  }
+  /* 갱신기대권: Stage 3 진입 시 계약만료이면 s3a-wrap 숨기고 renew-wrap 표시 */
+  if(key === 's3a' && S.s2 === 3){
+    // 계약만료는 일반 사유분석 불필요 — 갱신기대권만 판단
+    // (이미 goTo(3) 함수에서 처리)
   }
 
   /* Stage 3-A */
@@ -836,6 +932,93 @@ function selResignLvl(val, btn){
   checkNext3();
 }
 
+
+/* ════════════════════════════════════════
+   갱신기대권 판단 함수 (계약만료 전용)
+════════════════════════════════════════ */
+function selRenew(field, val, btn){
+  document.querySelectorAll('.renew-'+field+'-opt').forEach(function(b){b.classList.remove('selected');});
+  btn.classList.add('selected');
+  S['renew'+field.charAt(0).toUpperCase()+field.slice(1)] = val;
+
+  // 연쇄 표시
+  if(field === 'count'){
+    show('renew-q2');
+    hide('renew-q3'); hide('renew-q4');
+    hide('renew-no-expect'); hide('btn-renew-proceed'); hide('btn-renew-finish');
+    document.querySelectorAll('.renew-system-opt,.renew-promise-opt,.renew-reason-opt').forEach(function(b){b.classList.remove('selected');});
+    S.renewSystem=-1; S.renewPromise=-1; S.renewReason=-1;
+  }
+  if(field === 'system'){
+    show('renew-q3');
+    hide('renew-q4');
+    hide('renew-no-expect'); hide('btn-renew-proceed'); hide('btn-renew-finish');
+    document.querySelectorAll('.renew-promise-opt,.renew-reason-opt').forEach(function(b){b.classList.remove('selected');});
+    S.renewPromise=-1; S.renewReason=-1;
+  }
+  if(field === 'promise'){
+    show('renew-q4');
+    hide('renew-no-expect'); hide('btn-renew-proceed'); hide('btn-renew-finish');
+    document.querySelectorAll('.renew-reason-opt').forEach(function(b){b.classList.remove('selected');});
+    S.renewReason=-1;
+  }
+  if(field === 'reason'){
+    // 갱신기대권 점수 계산
+    var expectScore = calcExpectRight();
+    if(expectScore >= 2){
+      // 기대권 인정 가능 → 일반 절차로 진행
+      hide('renew-no-expect');
+      show('btn-renew-proceed');
+      hide('btn-renew-finish');
+    } else {
+      // 기대권 없음 → 조기 종료
+      show('renew-no-expect');
+      hide('btn-renew-proceed');
+      show('btn-renew-finish');
+    }
+  }
+}
+
+/* 갱신기대권 점수 계산 (0~5) */
+function calcExpectRight(){
+  var score = 0;
+  // 갱신 횟수
+  if(S.renewCount === 2) score += 2;       // 3회 이상
+  else if(S.renewCount === 1) score += 1;  // 1~2회
+  // 갱신 기준
+  if(S.renewSystem === 2) score += 2;      // 명문 조항
+  else if(S.renewSystem === 1) score += 1; // 관행적 기준
+  // 사용자 언동
+  if(S.renewPromise === 2) score += 2;     // 명시적 약속
+  else if(S.renewPromise === 1) score += 1;// 묵시적 기대
+  return score;
+}
+
+/* 갱신기대권 인정 → 일반 절차(Stage 4)로 진행 */
+function proceedAfterRenew(){
+  SB.st3 = '갱신기대권 인정 — 사유 분석';
+  highestStage = Math.max(highestStage, 4);
+  // 갱신기대권 인정된 경우는 s3a/s3b 불필요 — 양정만 간략 확인 후 Stage 4로
+  loading('갱신기대권을 검토했습니다...', 600, function(){
+    goToStage4();
+  });
+}
+
+function goToStage4(){
+  highestStage = Math.max(highestStage, 4);
+  jumpTo(4);
+}
+
+/* 갱신기대권 없음 → 결과 즉시 출력 */
+function calcRenewNoExpect(){
+  SB.st3 = '갱신기대권 없음';
+  SB.st4 = '진단 완료';
+  updateSidebar(4);
+  loading('판단 중입니다...', 800, function(){
+    showResult('renew-no');
+  });
+}
+
 function checkNext3(){
   if(S.s3c3 >= 0){
     document.getElementById('btn-next3').style.display = 'block';
@@ -853,7 +1036,7 @@ function calcResult(){
   var s3a_bonus = [0, 0, 0, 0, 15, 25]; // 마지막 두 개 (능력, 불명확)
   if(S.s3a >= 0){
     var add = s3a_bonus[S.s3a];
-    if(add > 0){ score += add',v:'+'+add}); }
+    if(add > 0){ score += add; }
   }
 
   /* 3-B 행위 카테고리 */
@@ -864,10 +1047,10 @@ function calcResult(){
   }
 
   /* 3-C1 형평성 */
-  if(S.s3c1 === 0){ score += 20', v:'+20'}); }
+  if(S.s3c1 === 0){ score += 20; }
 
   /* 3-C2 전력 */
-  if(S.s3c2 === 0){ score += 15', v:'+15'}); }
+  if(S.s3c2 === 0){ score += 15; }
   else if(S.s3c2 === 2){ score -= 10; }
 
   /* 3-C3 사전 경고 */
@@ -891,10 +1074,22 @@ function calcResult(){
   }
   if(S.s2 === 2){ score += 8; }  // 정리해고
   if(S.s2 === 4){ score += 8; }  // 당연퇴직
+  // 계약만료: 갱신기대권 강도에 따라 기본점수 조정
+  if(S.s2 === 3){
+    var expectStrength = calcExpectRight();
+    if(expectStrength >= 4){
+      score += 15; // 기대권 강 — 갱신 거절 = 부당해고 수준
+    } else if(expectStrength >= 2){
+      score += 5;  // 기대권 중 — 다툼 여지
+    }
+    // 갱신 거절 사유 미통보
+    if(S.renewReason === 0){ score += 20; }
+    else if(S.renewReason === 1){ score += 10; }
+  }
 
   /* 4-A 서면 통보 */
-  if(S.s4a === 0){ score += 20', v:'+20'}); }
-  else if(S.s4a === 1){ score += 10', v:'+10'}); }
+  if(S.s4a === 0){ score += 20; }
+  else if(S.s4a === 1){ score += 10; }
 
   /* 4-B 소명 기회 */
   if(S.s4b === 0){ score += 15; }
@@ -1003,16 +1198,16 @@ function showResult(type){
    리셋
 ════════════════════════════════════════ */
 function resetAll(){
-  S = {s1a:-1,s1b:-1,s1c:-1,s2:-1,resignSigned:-1,resignLvl:-1,s3a:-1,s3b:-1,s3c1:-1,s3c2:-1,s3c3:-1,s4a:-1,s4b:-1,s4c:-1,s4c2:-1,s4d:-1,dismissed5:false,certainBan:false,dismissalDate:null};
+  S = {s1a:-1,s1b:-1,s1c:-1,s2:-1,resignSigned:-1,resignLvl:-1,renewCount:-1,renewSystem:-1,renewPromise:-1,renewReason:-1,s3a:-1,s3b:-1,s3c1:-1,s3c2:-1,s3c3:-1,s4a:-1,s4b:-1,s4c:-1,s4c2:-1,s4d:-1,dismissed5:false,certainBan:false,dismissalDate:null};
   SB = {st1:'진행 중',st2:'대기 중',st3:'대기 중',st4:'대기 중'};
   highestStage = 1;
   document.querySelectorAll('.option-btn').forEach(function(b){b.classList.remove('selected');});
 
   // 숨김 처리
-  ['alert-five','btn-next1','q1b','opts1b','q1c','opts1c','s2-resign-wrap','resign-detail','date-result',
+  ['alert-five','btn-next1','q1b','opts1b','q1c','opts1c','s2-resign-wrap','resign-detail','s2-renew-wrap','renew-no-expect','btn-renew-proceed','btn-renew-finish','renew-q2','renew-q3','renew-q4','date-result',
    'btn-next2','s3b-wrap','s3c-wrap','q3c2','opts3c2','q3c3','opts3c3','btn-next3',
    'q4b','opts4b','q4c','opts4c','q4c2','opts4c2','q4d-wrap','btn-submit',
-   'result-certain','result-five','result-normal','r-urgent','r-money',
+   'result-certain','result-five','result-normal','result-renew-no','r-urgent','r-money',
    'btn-consult-n'].forEach(function(id){ hide(id); });
 
   hide('result-wrap');
