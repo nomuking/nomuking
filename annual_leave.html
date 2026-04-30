@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>연차휴가 계산기 2025 — 입사일·회계연도 기준 | NomuKing</title>
+<meta name="description" content="2025년 최신 근로기준법 기준 연차휴가 계산기. 입사일·회계연도 기준 모두 지원. 연도별 발생 내역, 미사용 연차수당 자동 계산.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#1A365D;--primary-l:#2D5A8E;--accent:#F26419;--accent-l:#FF8A4C;
+  --bg:#F7F5F2;--card:#FFFFFF;--result:#EEF4F8;
+  --text:#1A1A1A;--sub:#5A6672;--muted:#8C9BAA;--border:#DDE3E9;
+  --green:#276749;--green-l:#F0FFF4;--green-b:#9AE6B4;
+  --red:#C4432B;--yellow-bg:#FFFFF0;--yellow-b:#F6E05E;
+  --radius:12px;--radius-s:8px;--radius-xs:6px;
+  --shadow:0 1px 4px rgba(0,0,0,.07);--shadow-m:0 4px 16px rgba(0,0,0,.09);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;-webkit-user-select:none;user-select:none;}
+nav{background:var(--primary);height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.nav-logo{color:#fff;text-decoration:none;font-weight:800;font-size:18px;}
+.nav-links{display:flex;gap:4px;}
+.nav-links a{color:rgba(255,255,255,.85);text-decoration:none;font-size:13px;padding:6px 12px;border-radius:6px;transition:.2s;}
+.nav-links a:hover{background:rgba(255,255,255,.1);}
+.nav-links a.active{background:rgba(255,255,255,.15);color:#fff;font-weight:600;}
+.page-hero{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-l) 100%);padding:32px 20px 36px;text-align:center;color:#fff;position:relative;}
+.page-hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:5px;background:var(--accent);}
+.page-hero h1{font-size:24px;font-weight:800;margin-bottom:6px;letter-spacing:-.3px;}
+.page-hero p{font-size:13px;opacity:.8;line-height:1.6;}
+.hero-badge{display:inline-block;background:rgba(255,255,255,.15);font-size:11px;letter-spacing:.8px;padding:3px 12px;border-radius:20px;margin-bottom:12px;}
+.wrap{max-width:800px;margin:0 auto;padding:24px 16px 60px;}
+.tab-bar{display:flex;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:5px;margin-bottom:20px;gap:4px;border:1px solid var(--border);}
+.tab-btn{flex:1;padding:10px;border:none;background:transparent;border-radius:var(--radius-s);font-size:14px;font-weight:600;font-family:inherit;color:var(--sub);cursor:pointer;transition:.2s;}
+.tab-btn.active{background:var(--primary);color:#fff;}
+.card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);padding:24px;margin-bottom:18px;}
+.card-title{font-size:15px;font-weight:700;color:var(--primary);margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+.card-title .num{width:24px;height:24px;background:var(--primary);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.form-row{display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap;}
+.form-group{flex:1;min-width:140px;}
+label{display:block;font-size:12px;font-weight:600;color:var(--sub);margin-bottom:5px;}
+label .req{color:var(--red);margin-left:2px;}
+label .hint{font-weight:400;color:var(--muted);font-size:11px;margin-left:4px;}
+input[type=date],input[type=text],select{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-xs);font-size:14px;font-family:inherit;color:var(--text);background:#fff;transition:.2s;}
+input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(27,73,101,.1);}
+.num-in{text-align:right;}
+.chk-row{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;background:var(--yellow-bg);border:1px solid var(--yellow-b);border-radius:var(--radius-xs);font-size:13px;color:#744210;margin-bottom:14px;cursor:pointer;line-height:1.5;}
+.chk-row input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--accent);flex-shrink:0;margin-top:2px;}
+.btn-calc{display:block;width:100%;padding:15px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;transition:.2s;box-shadow:0 4px 14px rgba(242,100,25,.3);}
+.btn-calc:hover{background:var(--accent-l);transform:translateY(-1px);}
+.result-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:18px;}
+.rcard{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-s);padding:16px 18px;box-shadow:var(--shadow);}
+.rcard.accent{background:var(--primary);color:#fff;border-color:var(--primary);}
+.rcard.green{background:var(--green-l);border-color:var(--green-b);}
+.rcard.red-c{background:#FFF5F5;border-color:#FEB2B2;}
+.rcard.blue-c{background:var(--result);border-color:#BEE3F8;}
+.rcard-label{font-size:11px;font-weight:600;letter-spacing:.3px;margin-bottom:4px;opacity:.7;}
+.rcard.accent .rcard-label{color:rgba(255,255,255,.85);opacity:1;}
+.rcard-value{font-size:26px;font-weight:900;letter-spacing:-1px;line-height:1.1;}
+.rcard.accent .rcard-value{color:#fff;}
+.rcard.green .rcard-value{color:var(--green);}
+.rcard.red-c .rcard-value{color:var(--red);}
+.rcard.blue-c .rcard-value{font-size:18px;color:var(--primary);}
+.rcard-sub{font-size:11px;margin-top:4px;opacity:.65;}
+.table-wrap{overflow-x:auto;margin:0 -2px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{background:var(--primary);color:#fff;padding:9px 8px;text-align:center;white-space:nowrap;font-weight:500;}
+thead th:first-child{text-align:left;padding-left:12px;}
+tbody tr:nth-child(even){background:#FAFBFC;}
+tbody tr:hover{background:var(--result);}
+tbody td{padding:8px 8px;border-bottom:1px solid var(--border);text-align:center;vertical-align:middle;}
+tbody td:first-child{text-align:left;padding-left:12px;}
+.tag-m{display:inline-block;padding:2px 7px;background:#EBF8FF;color:#2B6CB0;border-radius:10px;font-size:10px;font-weight:700;}
+.tag-a{display:inline-block;padding:2px 7px;background:#F0FFF4;color:var(--green);border-radius:10px;font-size:10px;font-weight:700;}
+.tag-p{display:inline-block;padding:2px 7px;background:#FFFFF0;color:#744210;border-radius:10px;font-size:10px;font-weight:700;}
+tfoot td{background:var(--result);font-weight:700;color:var(--primary);padding:10px 8px;border-top:2px solid var(--primary);}
+tfoot td:first-child{padding-left:12px;}
+.allowance-card{background:var(--green-l);border:1px solid var(--green-b);border-radius:var(--radius-s);padding:18px 20px;margin-bottom:18px;}
+.allowance-card h3{font-size:14px;font-weight:700;color:var(--green);margin-bottom:12px;}
+.al-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid #C6F6D5;}
+.al-row:last-child{border-bottom:none;}
+.al-row .alv{font-weight:700;color:var(--green);}
+.al-total{background:var(--green);color:#fff;border-radius:var(--radius-xs);padding:12px 16px;margin-top:10px;display:flex;justify-content:space-between;align-items:center;}
+.al-total .alv{font-size:18px;font-weight:900;}
+.info-box{padding:12px 16px;border-radius:var(--radius-xs);font-size:12px;line-height:1.7;margin-bottom:14px;}
+.info-blue{background:#EBF8FF;border-left:4px solid #3182CE;color:#1A365D;}
+.info-yellow{background:#FFFFF0;border-left:4px solid #D69E2E;color:#744210;}
+.info-gray{background:#EDF2F7;border-left:4px solid #A0AEC0;color:#4A5568;}
+.result-section{display:none;}
+.result-section.show{display:block;animation:fadeUp .35s;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.error-msg{color:var(--red);font-size:12px;margin-top:6px;display:none;}
+.error-msg.show{display:block;}
+.faq{margin-top:28px;}
+.faq h2{font-size:18px;font-weight:700;color:var(--primary);margin-bottom:14px;}
+.faq-item{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-s);margin-bottom:8px;}
+.faq-q{padding:14px 16px;font-size:13px;font-weight:600;cursor:pointer;display:flex;justify-content:space-between;user-select:none;}
+.faq-q::after{content:'+';font-size:18px;color:var(--muted);}
+.faq-item.open .faq-q::after{content:'\2212';}
+.faq-a{display:none;padding:0 16px 14px;font-size:13px;color:var(--sub);line-height:1.8;}
+.faq-item.open .faq-a{display:block;}
+.copyright{font-size:11px;color:var(--muted);text-align:center;margin-top:20px;line-height:1.8;}
+footer{text-align:center;padding:24px 16px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);background:var(--card);}
+footer a{color:var(--primary);text-decoration:none;}
+@media(max-width:600px){
+  .result-grid{grid-template-columns:1fr 1fr;}
+  .rcard-value{font-size:20px;}
+  .form-row{flex-direction:column;gap:10px;}
+  .page-hero h1{font-size:20px;}
+  .nav-links a{font-size:12px;padding:5px 8px;}
+  table{font-size:12px;}
+}
+@media print{
+  nav,.tab-bar,.btn-calc,.faq,footer{display:none !important;}
+  .result-section{display:block !important;}
+  body{background:#fff;}
+  .card{box-shadow:none;border:1px solid #ddd;}
+}
+</style>
+</head>
+<body>
+
+<script>
+(function(){
+  document.addEventListener('contextmenu',function(e){e.preventDefault();});
+  document.addEventListener('selectstart',function(e){e.preventDefault();});
+  document.addEventListener('keydown',function(e){
+    var k=e.keyCode;
+    if(k===123){e.preventDefault();return false;}
+    if(e.ctrlKey&&e.shiftKey&&(k===73||k===74||k===67)){e.preventDefault();return false;}
+    if(e.ctrlKey&&(k===85||k===83||k===80||k===65)){e.preventDefault();return false;}
+  });
+  document.addEventListener('copy',function(e){
+    if(e.clipboardData)e.clipboardData.setData('text/plain','© NomuKing 무단 복제 금지');
+    e.preventDefault();
+  });
+})();
+</script>
+
+<nav>
+  <a href="index.html" class="nav-logo">NomuKing</a>
+  <div class="nav-links">
+    <a href="index.html">홈</a>
+    <a href="harassment.html">직장 내 괴롭힘</a>
+    <a href="unfair_dismissal.html">부당해고</a>
+    <a href="annual_leave.html" class="active">연차계산기</a>
+    <a href="board.html">커뮤니티</a>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <div class="hero-badge">근로기준법 제60조 기준</div>
+  <h1>🗓️ 연차휴가 계산기</h1>
+  <p>입사일 기준 · 회계연도 기준 동시 지원<br>연도별 발생 내역 · 미사용 연차수당 자동 계산</p>
+</div>
+
+<div class="wrap">
+
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-hire" onclick="switchTab('hire')">📅 입사일 기준</button>
+    <button class="tab-btn" id="tab-fiscal" onclick="switchTab('fiscal')">📆 회계연도 기준</button>
+  </div>
+
+  <!-- ════ 입사일 기준 패널 ════ -->
+  <div id="panel-hire">
+    <div class="card">
+      <div class="card-title"><span class="num">1</span>근무 정보 입력</div>
+
+      <div class="info-box info-blue">
+        <strong>입사일 기준</strong>: 입사 1주년·2주년… 각 기념일에 연차가 발생합니다. 소규모 사업장에서 주로 사용하며, 근로자마다 발생일이 다릅니다.
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="h-start">입사일<span class="req">*</span></label>
+          <input type="date" id="h-start">
+        </div>
+        <div class="form-group">
+          <label for="h-end">기준일<span class="req">*</span> <span class="hint">(오늘 또는 퇴직일)</span></label>
+          <input type="date" id="h-end">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="h-salary">월 통상임금 <span class="hint">(미사용 수당 계산용, 원)</span></label>
+          <input type="text" id="h-salary" class="num-in" inputmode="numeric" placeholder="3,000,000">
+        </div>
+        <div class="form-group">
+          <label for="h-used">기 사용 연차 <span class="hint">(일수)</span></label>
+          <input type="text" id="h-used" class="num-in" inputmode="numeric" placeholder="0" value="0">
+        </div>
+      </div>
+
+      <div class="chk-row" onclick="toggleBelow('h')">
+        <input type="checkbox" id="h-below80">
+        <span>전년도 출근율 <strong>80% 미만</strong>인 해가 있습니다 (해당 연도 연간 연차 미발생)</span>
+      </div>
+      <div id="h-below80-wrap" style="display:none;margin-bottom:14px;">
+        <label>80% 미만 해당 근속연수 <span class="hint">(쉼표 구분, 예: 2, 5 — 2년째·5년째)</span></label>
+        <input type="text" id="h-below80-years" placeholder="예: 2, 5" style="margin-top:4px;">
+      </div>
+
+      <div id="h-error" class="error-msg"></div>
+      <button class="btn-calc" onclick="calcHire()">연차 계산하기</button>
+    </div>
+
+    <div id="h-result" class="result-section"></div>
+  </div>
+
+  <!-- ════ 회계연도 기준 패널 ════ -->
+  <div id="panel-fiscal" style="display:none;">
+    <div class="card">
+      <div class="card-title"><span class="num">1</span>근무 정보 입력</div>
+
+      <div class="info-box info-blue">
+        <strong>회계연도 기준</strong>: 매년 회계연도 첫날에 전 직원 연차가 일괄 발생합니다. 대기업·공공기관에서 주로 사용하며, 입사 첫해는 비례 계산됩니다.
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="f-start">입사일<span class="req">*</span></label>
+          <input type="date" id="f-start">
+        </div>
+        <div class="form-group">
+          <label for="f-end">기준일<span class="req">*</span></label>
+          <input type="date" id="f-end">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group" style="max-width:200px;">
+          <label>회계연도 시작일<span class="req">*</span></label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <select id="f-fy-month" style="flex:1;">
+              <option value="1">1월</option><option value="2">2월</option>
+              <option value="3">3월</option><option value="4">4월</option>
+              <option value="5">5월</option><option value="6">6월</option>
+              <option value="7">7월</option><option value="8">8월</option>
+              <option value="9">9월</option><option value="10">10월</option>
+              <option value="11">11월</option><option value="12">12월</option>
+            </select>
+            <input type="text" id="f-fy-day" value="1" style="width:50px;text-align:center;" placeholder="1">
+            <span style="font-size:13px;color:var(--sub);white-space:nowrap;">일</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="f-salary">월 통상임금 <span class="hint">(원)</span></label>
+          <input type="text" id="f-salary" class="num-in" inputmode="numeric" placeholder="3,000,000">
+        </div>
+        <div class="form-group">
+          <label for="f-used">기 사용 연차 <span class="hint">(일수)</span></label>
+          <input type="text" id="f-used" class="num-in" inputmode="numeric" placeholder="0" value="0">
+        </div>
+      </div>
+
+      <div id="f-error" class="error-msg"></div>
+      <button class="btn-calc" onclick="calcFiscal()">연차 계산하기</button>
+    </div>
+
+    <div id="f-result" class="result-section"></div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="faq">
+    <h2>연차휴가 자주 묻는 질문</h2>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">1년 미만 신입사원도 연차가 있나요?</div>
+      <div class="faq-a">네. 근로기준법 제60조 제2항에 따라 1개월 개근 시 1일의 유급휴가가 발생합니다. 최대 11일이며, 입사 1년이 되면 15일 연차로 전환됩니다. 2020년 3월 31일 개정으로 1년 미만에 발생한 월 단위 연차는 1년차 연차(15일)에서 공제하지 않습니다.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">출근율 80% 미만이면 어떻게 되나요?</div>
+      <div class="faq-a">전년도 출근율이 80% 미만인 경우 해당 연도의 연간 연차(15일~25일)가 발생하지 않습니다(근로기준법 제60조 제1항). 단, 1년 미만 월 단위 연차는 출근율 요건이 없으며 1개월 개근 기준으로 발생합니다.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">연차는 언제까지 사용해야 하나요?</div>
+      <div class="faq-a">발생일로부터 1년 이내에 사용하지 않으면 원칙적으로 소멸됩니다(근로기준법 제60조 제7항). 단, 사용자가 연차사용촉진 조치를 취하지 않은 경우 미사용 연차에 대한 금전 보상(연차수당) 의무가 발생합니다. 수당 청구권의 소멸시효는 3년입니다.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">가산 연차는 어떻게 계산하나요?</div>
+      <div class="faq-a">3년 이상 근속 시 2년마다 1일이 가산됩니다. 공식: 15일 + floor((근속연수 - 1) ÷ 2), 최대 25일. 예시: 3년 = 16일, 5년 = 17일, 7년 = 18일, 9년 = 19일, 21년 이상 = 25일(상한).</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">회계연도 기준의 비례 계산은 무엇인가요?</div>
+      <div class="faq-a">회계연도 기준 사업장에 입사 첫해 발생하는 연차입니다. 입사일부터 첫 회계연도 시작일까지의 일수를 365로 나눈 후 15를 곱해 산출합니다. 예: 12월 18일 입사(회계연도 1/1) → 14일 ÷ 365 × 15 = 약 0.58일. 소수점 처리는 회사 내규에 따릅니다(보통 올림).</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">미사용 연차수당은 어떻게 계산하나요?</div>
+      <div class="faq-a">미사용 연차일수 × 1일 통상임금으로 계산합니다. 1일 통상임금 = 월 통상임금 ÷ 209시간 × 8시간 (주 40시간제 기준). 수당 청구권의 소멸시효는 3년입니다(근로기준법 제49조).</div>
+    </div>
+  </div>
+
+  <div class="copyright">
+    본 계산기는 참고용이며 법적 효력이 없습니다.<br>
+    <strong>Copyright © 2025 NomuKing. 무단 도용·복제 시 민형사상 책임을 묻습니다.</strong>
+  </div>
+</div>
+
+<footer>© 2025 <a href="index.html">NomuKing</a> — 노무사가 직접 알려주는 인사노무의 모든 것</footer>
+
+<script>
+/* ══ 유틸 ══ */
+function fmt(n){return(n==null||isNaN(n))?'0':Math.round(n).toLocaleString('ko-KR');}
+function fmtF(n,d){return(n==null||isNaN(n))?'0':parseFloat(n).toLocaleString('ko-KR',{minimumFractionDigits:d,maximumFractionDigits:d});}
+function fmtWon(n){return fmt(n)+'원';}
+function parseN(id){var el=document.getElementById(id);return el?parseInt(el.value.replace(/[^0-9]/g,''),10)||0:0;}
+
+document.addEventListener('input',function(e){
+  if(!e.target.classList.contains('num-in'))return;
+  var raw=e.target.value.replace(/[^0-9]/g,'');
+  if(!raw)return;
+  var p=e.target.selectionStart,pl=e.target.value.length;
+  e.target.value=parseInt(raw,10).toLocaleString('ko-KR');
+  var nl=e.target.value.length;
+  try{e.target.setSelectionRange(p+(nl-pl),p+(nl-pl));}catch(x){}
+});
+
+// 오늘 날짜 기본값
+(function(){
+  var t=new Date().toISOString().split('T')[0];
+  document.getElementById('h-end').value=t;
+  document.getElementById('f-end').value=t;
+})();
+
+/* ══ 날짜 유틸 ══ */
+function addMonthsD(d,n){
+  var r=new Date(d.getFullYear(),d.getMonth()+n,d.getDate());
+  // 월 넘침: 예) 1/31 + 1달 → 3/2 이 아니라 2/28로
+  if(r.getMonth()!==(d.getMonth()+n)%12){r.setDate(0);}
+  return r;
+}
+function addYearsD(d,n){
+  var r=new Date(d.getFullYear()+n,d.getMonth(),d.getDate());
+  if(r.getMonth()!==d.getMonth()){r.setDate(0);}
+  return r;
+}
+function completedMonths(s,e){
+  var m=(e.getFullYear()-s.getFullYear())*12+(e.getMonth()-s.getMonth());
+  if(e.getDate()<s.getDate())m--;
+  return Math.max(0,m);
+}
+function completedYears(s,e){return Math.floor(completedMonths(s,e)/12);}
+function diffDays(a,b){return Math.round((b-a)/86400000);}
+function fmtD(d){return d.getFullYear()+'.'+(d.getMonth()+1+'').padStart(2,'0')+'.'+(''+d.getDate()).padStart(2,'0');}
+function fmtRange(s,e){return fmtD(s)+' ~ '+fmtD(e);}
+
+/* 근속연수별 연차일수 (근기법 제60조) */
+function leaveByYears(y){
+  if(y<=0)return 0;
+  if(y===1)return 15;
+  return Math.min(15+Math.floor((y-1)/2),25);
+}
+
+/* ══ 탭 ══ */
+function switchTab(t){
+  document.getElementById('tab-hire').classList.toggle('active',t==='hire');
+  document.getElementById('tab-fiscal').classList.toggle('active',t==='fiscal');
+  document.getElementById('panel-hire').style.display=t==='hire'?'block':'none';
+  document.getElementById('panel-fiscal').style.display=t==='fiscal'?'block':'none';
+}
+function toggleBelow(prefix){
+  var cb=document.getElementById(prefix+'-below80');
+  cb.checked=!cb.checked;
+  document.getElementById(prefix+'-below80-wrap').style.display=cb.checked?'block':'none';
+}
+
+/* ══ 입사일 기준 계산 ══ */
+function calcHire(){
+  var err=document.getElementById('h-error');
+  err.className='error-msg';
+  var sv=document.getElementById('h-start').value, ev=document.getElementById('h-end').value;
+  if(!sv||!ev){err.textContent='입사일과 기준일을 모두 입력해주세요.';err.className='error-msg show';return;}
+  var start=new Date(sv), end=new Date(ev);
+  if(end<=start){err.textContent='기준일은 입사일 이후여야 합니다.';err.className='error-msg show';return;}
+
+  var salary=parseN('h-salary');
+  var usedDays=parseN('h-used');
+
+  // 80% 미만 연수 파싱
+  var below80=new Set();
+  if(document.getElementById('h-below80').checked){
+    (document.getElementById('h-below80-years').value||'').split(',').forEach(function(s){
+      var n=parseInt(s.trim());if(!isNaN(n)&&n>0)below80.add(n);
+    });
+  }
+
+  var rows=[], total=0;
+
+  // ── 1년 미만 월 단위 ──
+  var firstAnn=addYearsD(start,1);
+  var mEnd=end<firstAnn?end:firstAnn;
+  var monthly=Math.min(completedMonths(start,mEnd),11);
+  rows.push({yr:'1년차',label:'입사 첫해',type:'monthly',
+    occ:'매월 '+start.getDate()+'일',
+    period:fmtRange(start,new Date(firstAnn-86400000)),
+    days:monthly,note:'최대 11일 · 1개월 개근 시 1일'});
+  total+=monthly;
+
+  // ── 연간 발생 (1년차 이상) ──
+  for(var y=1;y<=25;y++){
+    var anniv=addYearsD(start,y);
+    if(anniv>end)break;
+    var skip=below80.has(y);
+    var days=skip?0:leaveByYears(y);
+    var nxt=addYearsD(start,y+1);
+    var pEnd=new Date(Math.min(nxt-86400000,end.getTime()));
+    var note='';
+    if(skip)note='⚠️ 출근율 80% 미만 — 미발생';
+    else if(y>=3)note='가산 '+Math.floor((y-1)/2)+'일 포함';
+    rows.push({yr:(y+1)+'년차',label:y+'년 근속',type:'annual',
+      occ:fmtD(anniv),period:fmtRange(anniv,pEnd),days:days,note:note});
+    total+=days;
+  }
+
+  var remaining=Math.max(0,total-usedDays);
+  var daily=salary>0?Math.round(salary/209*8):0;
+  renderResult('h-result',rows,total,usedDays,remaining,salary,daily,start,end,'hire');
+}
+
+/* ══ 회계연도 기준 계산 ══ */
+function calcFiscal(){
+  var err=document.getElementById('f-error');
+  err.className='error-msg';
+  var sv=document.getElementById('f-start').value, ev=document.getElementById('f-end').value;
+  if(!sv||!ev){err.textContent='입사일과 기준일을 모두 입력해주세요.';err.className='error-msg show';return;}
+  var start=new Date(sv), end=new Date(ev);
+  if(end<=start){err.textContent='기준일은 입사일 이후여야 합니다.';err.className='error-msg show';return;}
+
+  var fyMonth=parseInt(document.getElementById('f-fy-month').value)||1;
+  var fyDay=parseInt(document.getElementById('f-fy-day').value)||1;
+  var salary=parseN('f-salary');
+  var usedDays=parseN('f-used');
+  var rows=[], total=0;
+
+  // 첫 회계연도 시작일 (입사일 이후)
+  var fyStart=new Date(start.getFullYear(),fyMonth-1,fyDay);
+  if(fyStart<=start)fyStart=new Date(fyStart.getFullYear()+1,fyMonth-1,fyDay);
+
+  // ── 입사년도: 월 단위 ──
+  var entryEnd=new Date(fyStart-86400000);
+  var mEnd=end<fyStart?end:fyStart;
+  var entryM=Math.min(completedMonths(start,mEnd),11);
+  rows.push({yr:start.getFullYear()+'년 (입사년도)',label:'',type:'monthly',
+    occ:'매월 '+start.getDate()+'일',
+    period:fmtRange(start,entryEnd),
+    days:entryM,note:'입사년도 월 단위 · 최대 11일'});
+  total+=entryM;
+
+  if(fyStart>end){renderResult('f-result',rows,total,usedDays,Math.max(0,total-usedDays),salary,salary>0?Math.round(salary/209*8):0,start,end,'fiscal');return;}
+
+  // ── 첫 회계연도: 비례 연차 ──
+  var dBefore=diffDays(start,fyStart);
+  var prop=dBefore/365*15;
+  rows.push({yr:fyStart.getFullYear()+'년 (비례)',label:'',type:'proportional',
+    occ:fmtD(fyStart),
+    period:fmtD(fyStart),
+    days:prop,
+    note:'입사~회계연도 시작 '+dBefore+'일 ÷ 365 × 15'});
+  total+=prop;
+
+  // ── 전환년도 월 단위 잔여분 (1년 미만 기간, 회계연도 진입 후) ──
+  var firstAnn=addYearsD(start,1);
+  if(firstAnn>fyStart){
+    var tEnd=end<firstAnn?end:firstAnn;
+    var tM=Math.min(completedMonths(fyStart,tEnd),11-entryM);
+    if(tM>0){
+      rows.push({yr:fyStart.getFullYear()+'년 (월단위)',label:'',type:'monthly',
+        occ:'매월 '+start.getDate()+'일',
+        period:fmtRange(fyStart,new Date(firstAnn-86400000)),
+        days:tM,note:'1주년 전까지 월 단위 추가'});
+      total+=tM;
+    }
+  }
+
+  // ── 이후 회계연도: 연간 발생 ──
+  var curFY=new Date(fyStart.getFullYear()+1,fyMonth-1,fyDay);
+  while(curFY<=end){
+    var svcY=completedYears(start,curFY);
+    var days=leaveByYears(svcY);
+    var nxtFY=new Date(curFY.getFullYear()+1,fyMonth-1,fyDay);
+    var pEnd=new Date(Math.min(nxtFY-86400000,end.getTime()));
+    var note=svcY>=3?'가산 '+Math.floor((svcY-1)/2)+'일 포함':'';
+    rows.push({yr:curFY.getFullYear()+'년 ('+svcY+'년 근속)',label:'',type:'annual',
+      occ:fmtD(curFY),period:fmtRange(curFY,pEnd),days:days,note:note});
+    total+=days;
+    curFY=new Date(curFY.getFullYear()+1,fyMonth-1,fyDay);
+    if(curFY.getFullYear()>start.getFullYear()+35)break;
+  }
+
+  var remaining=Math.max(0,total-usedDays);
+  var daily=salary>0?Math.round(salary/209*8):0;
+  renderResult('f-result',rows,total,usedDays,remaining,salary,daily,start,end,'fiscal');
+}
+
+/* ══ 결과 렌더 (공통) ══ */
+function renderResult(targetId,rows,total,used,remaining,salary,daily,start,end,mode){
+  var svcY=completedYears(start,end);
+  var svcM=completedMonths(start,end)%12;
+  var allowance=daily*Math.floor(remaining);
+
+  var isFiscal=(mode==='fiscal');
+  var totalFmt=isFiscal?fmtF(total,2):fmtF(total,0);
+  var remainFmt=isFiscal?fmtF(remaining,2):fmtF(remaining,0);
+
+  var h='';
+
+  /* 요약 카드 */
+  h+='<div class="result-grid">';
+  h+='<div class="rcard accent"><div class="rcard-label">총 발생 연차</div><div class="rcard-value">'+totalFmt+'<span style="font-size:14px;font-weight:500;margin-left:3px;">일</span></div><div class="rcard-sub">기준일까지 누적</div></div>';
+  h+='<div class="rcard red-c"><div class="rcard-label">사용 연차</div><div class="rcard-value">'+fmt(used)+'<span style="font-size:14px;font-weight:500;margin-left:3px;">일</span></div><div class="rcard-sub">직접 입력값</div></div>';
+  h+='<div class="rcard green"><div class="rcard-label">잔여 연차</div><div class="rcard-value">'+remainFmt+'<span style="font-size:14px;font-weight:500;margin-left:3px;">일</span></div><div class="rcard-sub">미사용 잔여</div></div>';
+  h+='<div class="rcard blue-c"><div class="rcard-label">현재 근속</div><div class="rcard-value">'+svcY+'년 '+svcM+'개월</div><div class="rcard-sub">'+fmtD(start)+' 입사</div></div>';
+  h+='</div>';
+
+  /* 발생 내역 테이블 */
+  h+='<div class="card">';
+  h+='<div class="card-title"><span class="num" style="background:transparent;color:var(--primary);font-size:16px;">📋</span>'+(isFiscal?'회계연도별':'연도별')+' 발생 내역</div>';
+  h+='<div class="table-wrap"><table>';
+  h+='<thead><tr>';
+  h+='<th>'+(isFiscal?'회계연도':'근무년차')+'</th>';
+  h+='<th>발생 구분</th><th>발생일 / 기준</th><th>발생기간</th><th>발생일수</th><th>비고</th>';
+  h+='</tr></thead><tbody>';
+
+  rows.forEach(function(r){
+    var tag='';
+    if(r.type==='monthly')tag='<span class="tag-m">월단위</span>';
+    else if(r.type==='annual')tag='<span class="tag-a">연간</span>';
+    else if(r.type==='proportional')tag='<span class="tag-p">비례</span>';
+
+    var dFmt='';
+    if(r.type==='proportional')dFmt=fmtF(r.days,4).replace(/0+$/,'').replace(/\\.$/,'');
+    else dFmt=fmtF(r.days,0);
+
+    h+='<tr>';
+    h+='<td style="font-weight:600;">'+r.yr+'</td>';
+    h+='<td>'+tag+'</td>';
+    h+='<td>'+r.occ+'</td>';
+    h+='<td style="font-size:11px;color:var(--sub);">'+r.period+'</td>';
+    h+='<td><strong>'+dFmt+'일</strong></td>';
+    h+='<td style="font-size:11px;color:var(--sub);">'+r.note+'</td>';
+    h+='</tr>';
+  });
+
+  h+='</tbody>';
+  var totalTxt=isFiscal?fmtF(total,4).replace(/\\.?0+$/,''):fmtF(total,0);
+  h+='<tfoot><tr><td colspan="4">합 계</td><td>'+totalTxt+'일</td><td></td></tr></tfoot>';
+  h+='</table></div>';
+
+  if(isFiscal){
+    h+='<div class="info-box info-yellow" style="margin-top:12px;">※ 비례 연차(소수점)의 단수 처리는 회사 내규에 따릅니다. 일반적으로 올림 처리합니다. 수당 계산 시에는 소수점 이하를 버림 처리하는 경우가 많습니다.</div>';
+  }else{
+    h+='<div class="info-box info-gray" style="margin-top:12px;">※ 전년도 출근율 80% 이상인 경우를 기준으로 산정합니다. 출근율 산정 시 육아휴직·업무상 부상 등 법정 휴가는 출근한 것으로 봅니다(근기법 제60조 제6항).</div>';
+  }
+  h+='</div>';
+
+  /* 미사용 수당 */
+  if(salary>0){
+    h+='<div class="allowance-card">';
+    h+='<h3>💰 미사용 연차수당 계산</h3>';
+    h+='<div class="al-row"><span>월 통상임금</span><span class="alv">'+fmtWon(salary)+'</span></div>';
+    h+='<div class="al-row"><span>1일 통상임금 (월급 ÷ 209시간 × 8시간)</span><span class="alv">'+fmtWon(daily)+'</span></div>';
+    h+='<div class="al-row"><span>수당 계산 기준 잔여 연차</span><span class="alv">'+Math.floor(remaining)+'일</span></div>';
+    h+='<div class="al-total"><span style="font-weight:600;">미사용 연차수당 (잔여 × 1일 통상임금)</span><span class="alv">'+fmtWon(allowance)+'</span></div>';
+    h+='<div class="info-box info-yellow" style="margin-top:12px;">※ 연차사용촉진 조치를 적법하게 이행한 경우 수당 지급 의무가 면제됩니다. 수당 청구권 소멸시효: <strong>3년</strong>(근로기준법 제49조).</div>';
+    h+='</div>';
+  }else{
+    h+='<div class="info-box info-gray">💡 월 통상임금을 입력하면 미사용 연차수당을 자동 계산합니다.</div>';
+  }
+
+  /* 다시 계산 버튼 */
+  h+='<button class="btn-calc" style="background:#718096;box-shadow:none;margin-top:4px;" onclick="resetResult(\''+targetId+'\')">🔄 다시 계산하기</button>';
+
+  var el=document.getElementById(targetId);
+  el.innerHTML=h;
+  el.className='result-section show';
+  el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function resetResult(id){
+  document.getElementById(id).className='result-section';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ══ FAQ ══ */
+function toggleFaq(el){el.parentElement.classList.toggle('open');}
+</script>
+</body>
+</html>
