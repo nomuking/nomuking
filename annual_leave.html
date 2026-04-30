@@ -118,6 +118,16 @@ footer a{color:var(--primary);text-decoration:none;}
   body{background:#fff;}
   .card{box-shadow:none;border:1px solid #ddd;}
 }
+
+/* ── 날짜 분할 입력 ── */
+.date-input-group{display:flex;align-items:center;gap:4px;}
+.date-input-group input{text-align:center;padding:10px 6px;border:1.5px solid var(--border);border-radius:var(--radius-xs);font-size:14px;font-family:inherit;color:var(--text);background:#fff;transition:.2s;}
+.date-input-group input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(27,73,101,.1);}
+.date-input-group .di-year{width:72px;}
+.date-input-group .di-month{width:50px;}
+.date-input-group .di-day{width:50px;}
+.date-input-group .di-sep{color:var(--muted);font-size:14px;font-weight:600;user-select:none;}
+
 </style>
 </head>
 <body>
@@ -175,11 +185,11 @@ footer a{color:var(--primary);text-decoration:none;}
       <div class="form-row">
         <div class="form-group">
           <label for="h-start">입사일<span class="req">*</span></label>
-          <input type="date" id="h-start">
+          <div class="date-input-group"><input type="text" id="h-start-y" class="di-year" maxlength="4" inputmode="numeric" placeholder="YYYY" oninput="autoNext(this,4,'h-start-m')"><span class="di-sep">.</span><input type="text" id="h-start-m" class="di-month" maxlength="2" inputmode="numeric" placeholder="MM" oninput="autoNext(this,2,'h-start-d')" onkeydown="backToPrev(event,'h-start-y')"><span class="di-sep">.</span><input type="text" id="h-start-d" class="di-day" maxlength="2" inputmode="numeric" placeholder="DD" onkeydown="backToPrev(event,'h-start-m')"></div>
         </div>
         <div class="form-group">
           <label for="h-end">기준일<span class="req">*</span> <span class="hint">(오늘 또는 퇴직일)</span></label>
-          <input type="date" id="h-end">
+          <div class="date-input-group"><input type="text" id="h-end-y" class="di-year" maxlength="4" inputmode="numeric" placeholder="YYYY" oninput="autoNext(this,4,'h-end-m')"><span class="di-sep">.</span><input type="text" id="h-end-m" class="di-month" maxlength="2" inputmode="numeric" placeholder="MM" oninput="autoNext(this,2,'h-end-d')" onkeydown="backToPrev(event,'h-end-y')"><span class="di-sep">.</span><input type="text" id="h-end-d" class="di-day" maxlength="2" inputmode="numeric" placeholder="DD" onkeydown="backToPrev(event,'h-end-m')"></div>
         </div>
       </div>
 
@@ -222,11 +232,11 @@ footer a{color:var(--primary);text-decoration:none;}
       <div class="form-row">
         <div class="form-group">
           <label for="f-start">입사일<span class="req">*</span></label>
-          <input type="date" id="f-start">
+          <div class="date-input-group"><input type="text" id="f-start-y" class="di-year" maxlength="4" inputmode="numeric" placeholder="YYYY" oninput="autoNext(this,4,'f-start-m')"><span class="di-sep">.</span><input type="text" id="f-start-m" class="di-month" maxlength="2" inputmode="numeric" placeholder="MM" oninput="autoNext(this,2,'f-start-d')" onkeydown="backToPrev(event,'f-start-y')"><span class="di-sep">.</span><input type="text" id="f-start-d" class="di-day" maxlength="2" inputmode="numeric" placeholder="DD" onkeydown="backToPrev(event,'f-start-m')"></div>
         </div>
         <div class="form-group">
           <label for="f-end">기준일<span class="req">*</span></label>
-          <input type="date" id="f-end">
+          <div class="date-input-group"><input type="text" id="f-end-y" class="di-year" maxlength="4" inputmode="numeric" placeholder="YYYY" oninput="autoNext(this,4,'f-end-m')"><span class="di-sep">.</span><input type="text" id="f-end-m" class="di-month" maxlength="2" inputmode="numeric" placeholder="MM" oninput="autoNext(this,2,'f-end-d')" onkeydown="backToPrev(event,'f-end-y')"><span class="di-sep">.</span><input type="text" id="f-end-d" class="di-day" maxlength="2" inputmode="numeric" placeholder="DD" onkeydown="backToPrev(event,'f-end-m')"></div>
         </div>
       </div>
 
@@ -301,6 +311,31 @@ footer a{color:var(--primary);text-decoration:none;}
 <footer>© 2025 <a href="index.html">NomuKing</a> — 노무사가 직접 알려주는 인사노무의 모든 것</footer>
 
 <script>
+
+/* ── 분할 날짜 입력 헬퍼 ── */
+function autoNext(el, maxLen, nextId){
+  el.value = el.value.replace(/[^0-9]/g,'');
+  if(el.value.length >= maxLen){
+    var next = document.getElementById(nextId);
+    if(next){ next.focus(); next.select(); }
+  }
+}
+function backToPrev(e, prevId){
+  if(e.key==='Backspace' && e.target.value===''){
+    var prev = document.getElementById(prevId);
+    if(prev){ prev.focus(); }
+  }
+}
+function getDateFromFields(prefix){
+  var y=document.getElementById(prefix+'-y').value.trim();
+  var m=document.getElementById(prefix+'-m').value.trim().padStart(2,'0');
+  var d=document.getElementById(prefix+'-d').value.trim().padStart(2,'0');
+  if(!y||!m||!d||y.length<4) return null;
+  var dt = new Date(y+'-'+m+'-'+d);
+  if(isNaN(dt.getTime())) return null;
+  return dt;
+}
+
 /* ══ 유틸 ══ */
 function fmt(n){return(n==null||isNaN(n))?'0':Math.round(n).toLocaleString('ko-KR');}
 function fmtF(n,d){return(n==null||isNaN(n))?'0':parseFloat(n).toLocaleString('ko-KR',{minimumFractionDigits:d,maximumFractionDigits:d});}
@@ -319,9 +354,14 @@ document.addEventListener('input',function(e){
 
 // 오늘 날짜 기본값
 (function(){
-  var t=new Date().toISOString().split('T')[0];
-  document.getElementById('h-end').value=t;
-  document.getElementById('f-end').value=t;
+  var t=new Date();
+  var y=t.getFullYear(),m=(''+( t.getMonth()+1)).padStart(2,'0'),d=(''+t.getDate()).padStart(2,'0');
+  var el;
+  ['h-end','f-end'].forEach(function(prefix){
+    el=document.getElementById(prefix+'-y'); if(el)el.value=y;
+    el=document.getElementById(prefix+'-m'); if(el)el.value=m;
+    el=document.getElementById(prefix+'-d'); if(el)el.value=d;
+  });
 })();
 
 /* ══ 날짜 유틸 ══ */
@@ -370,9 +410,8 @@ function toggleBelow(prefix){
 function calcHire(){
   var err=document.getElementById('h-error');
   err.className='error-msg';
-  var sv=document.getElementById('h-start').value, ev=document.getElementById('h-end').value;
-  if(!sv||!ev){err.textContent='입사일과 기준일을 모두 입력해주세요.';err.className='error-msg show';return;}
-  var start=new Date(sv), end=new Date(ev);
+  var start=getDateFromFields('h-start'), end=getDateFromFields('h-end');
+  if(!start||!end){err.textContent='입사일과 기준일을 모두 올바르게 입력해주세요. (YYYY.MM.DD)';err.className='error-msg show';return;}
   if(end<=start){err.textContent='기준일은 입사일 이후여야 합니다.';err.className='error-msg show';return;}
 
   var salary=parseN('h-salary');
@@ -423,9 +462,8 @@ function calcHire(){
 function calcFiscal(){
   var err=document.getElementById('f-error');
   err.className='error-msg';
-  var sv=document.getElementById('f-start').value, ev=document.getElementById('f-end').value;
-  if(!sv||!ev){err.textContent='입사일과 기준일을 모두 입력해주세요.';err.className='error-msg show';return;}
-  var start=new Date(sv), end=new Date(ev);
+  var start=getDateFromFields('f-start'), end=getDateFromFields('f-end');
+  if(!start||!end){err.textContent='입사일과 기준일을 모두 올바르게 입력해주세요. (YYYY.MM.DD)';err.className='error-msg show';return;}
   if(end<=start){err.textContent='기준일은 입사일 이후여야 합니다.';err.className='error-msg show';return;}
 
   var fyMonth=parseInt(document.getElementById('f-fy-month').value)||1;
